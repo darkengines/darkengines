@@ -17,8 +17,9 @@
     },
     "DarkEngines.Server": {
       "commandName": "Project",
+      "commandLineArgs": "--server.urls=http://localhost:8080/",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5000",
+      "launchUrl": "http://localhost:8080",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
