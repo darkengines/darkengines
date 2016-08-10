@@ -5,12 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Darkengines.Forex
-{
-	public class CurrencyClassMap: ClassMap<Currency>
-	{
-		public CurrencyClassMap()
-		{
+namespace Darkengines.Forex {
+	public class CurrencyClassMap : ClassMap<Currency> {
+		public CurrencyClassMap() {
 			Map(currency => currency.Code);
 			Map(currency => currency.DecimalDigits);
 			Map(currency => currency.Name);
