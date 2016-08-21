@@ -1,5 +1,6 @@
 .vs
 packages
+DarkEngines.PlayGround
 .sdf
 *.db
 *.opendb
