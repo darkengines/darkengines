@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DarkEngines.Server {
     public static class JsonSerializerExtensions {
         public static IServiceCollection AddJsonSerializer(this IServiceCollection serviceCollection) {
-            return serviceCollection.AddSingleton<JsonSerializer>();
+            return serviceCollection.AddSingleton<ISerializer, JsonSerializer>();
         }
     }
     public class JsonSerializer : ISerializer {

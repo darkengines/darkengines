@@ -13,21 +13,24 @@ namespace DarkEngines.Server {
         }
     }
     public class HttpManagedServiceRequestHandler : ManagedServiceRequestHandler<HttpContext> {
-        protected IServiceProvider ServiceProvider { get; }
-        public HttpManagedServiceRequestHandler(ActionContextRepository actionContextRepository, IServiceProvider serviceProvider)
+		protected IEnumerable<ISerializer> Serializers { get; }
+		protected IEnumerable<IManagedServicePayloadTypeRepository> ManagedServicePayloadTypeRepository { get; }
+
+		public HttpManagedServiceRequestHandler(ActionContextRepository actionContextRepository, IEnumerable<ISerializer> serializers, IEnumerable<IManagedServicePayloadTypeRepository> managedServicePayloadTypeRepository)
         : base(actionContextRepository) {
-            ServiceProvider = serviceProvider;
-        }
+			Serializers = serializers;
+			ManagedServicePayloadTypeRepository = managedServicePayloadTypeRepository;
+		}
 
         protected async override Task<IManagedServicePayload> LoadPayload(HttpContext context) {
             var inputContentType = context.Request.ContentType;
-            var inputSerializer = ServiceProvider.GetServices<ISerializer>()
-            .First(serializer => serializer.ContentType.Equals(inputContentType, StringComparison.OrdinalIgnoreCase));
+            var inputSerializer = Serializers
+			.First(serializer => serializer.ContentType.Equals(inputContentType, StringComparison.OrdinalIgnoreCase));
 
             using (var reader = new StreamReader(context.Request.Body)) {
                 var content = await reader.ReadToEndAsync();
-                var payloadType = ServiceProvider.GetServices<IManagedServicePayloadTypeRepository>()
-                .First(provider => provider.ContentType == inputContentType).ManagedServicePayloadType;
+                var payloadType = ManagedServicePayloadTypeRepository
+				.First(provider => provider.ContentType == inputContentType).ManagedServicePayloadType;
                 var payload = (IManagedServicePayload)inputSerializer.Deserialize(content, payloadType);
                 return payload;
             }
@@ -35,8 +38,8 @@ namespace DarkEngines.Server {
 
         protected async override Task WriteResponse(HttpContext context, object result) {
             var outputContentType = context.Request.Headers["accept"];
-            var outputSerializer = ServiceProvider.GetServices<ISerializer>()
-            .First(serializer => serializer.ContentType.Equals(outputContentType, StringComparison.OrdinalIgnoreCase));
+            var outputSerializer = Serializers
+			.First(serializer => serializer.ContentType.Equals(outputContentType, StringComparison.OrdinalIgnoreCase));
             var serializedContent = outputSerializer.Serialize(result);
 
             context.Response.ContentType = outputContentType;

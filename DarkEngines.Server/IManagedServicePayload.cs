@@ -13,7 +13,8 @@ namespace DarkEngines.Server {
         string Key { get; }
     }
 
-    public class JsonManagedServicePayload {
+    public class JsonManagedServicePayload: IManagedServicePayload
+	{
         public string ServiceName { get; set; }
         public string MethodName { get; set; }
         public JToken Parameters { get; set; }

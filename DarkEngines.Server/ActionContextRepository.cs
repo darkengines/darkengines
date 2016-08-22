@@ -14,8 +14,10 @@ namespace DarkEngines.Server {
     }
     public class ActionContextRepository {
         private Dictionary<string, ActionContext> ActionContexts { get; }
-        private ActionContextRepository(IServiceProvider serviceProvider) {
-            var services = serviceProvider.GetServices<IService>();
+		protected IEnumerable<IService> Services { get; }
+
+		public ActionContextRepository(IEnumerable<IService> services) {
+			Services = services;
             ActionContexts = services.SelectMany(CreateActionContexts)
             .ToDictionary(actionContext => actionContext.Key, actionContext => actionContext);
         }

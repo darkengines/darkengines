@@ -23,8 +23,10 @@ namespace DarkEngines.Server {
             .AddEntityFrameworkNpgsql()
             .AddDbContext<ForexDbContext>(options => options.UseNpgsql("host=127.0.0.1;userid=postgres;password=2701104$reg2rt;database=forex"))
             .AddJsonSerializer()
+			.AddActionContextRepository()
             .AddHttpManagedServiceRequestHandler()
-            .AddMyService();
+			.AddJsonManagedServicePayloadType()
+			.AddMyService();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
