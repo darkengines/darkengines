@@ -22,12 +22,13 @@ namespace DarkEngines.Server {
 
         public ActionContext(IService service, MethodInfo methodInfo) {
             Service = service;
-            Key = $"{methodInfo.DeclaringType.FullName}.{methodInfo.Name}";
+			var serviceType = service.GetType();
+			Key = $"{serviceType.FullName}.{methodInfo.Name}";
 
             ParameterInfos = methodInfo.GetParameters();
             var orderedParameterTypes = ParameterInfos.Select(parameterInfo => parameterInfo.ParameterType).ToArray();
 
-            var serviceInstanceParameterNameChars = methodInfo.DeclaringType.Name.ToCharArray();
+            var serviceInstanceParameterNameChars = serviceType.Name.ToCharArray();
 
             serviceInstanceParameterNameChars[0] = char.ToLower(serviceInstanceParameterNameChars[0]);
             var serviceInstanceParameterName = new string(serviceInstanceParameterNameChars);
@@ -40,7 +41,7 @@ namespace DarkEngines.Server {
                 orderedParameterTypes[index]
              ));
 
-            var callExpression = Expression.Convert(Expression.Call(Expression.Convert(serviceInstanceParameterExpression, methodInfo.DeclaringType),
+            var callExpression = Expression.Convert(Expression.Call(Expression.Convert(serviceInstanceParameterExpression, serviceType),
             methodInfo, parameterAccessExpressions), typeof(object));
 
             var lambda = Expression.Lambda<Func<object, object[], object>>(callExpression, serviceInstanceParameterExpression, parameterArrayParameterExpression);

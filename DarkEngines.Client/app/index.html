@@ -91,6 +91,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <iron-icon icon="mail"></iron-icon>
             <span>Contact</span>
           </a>
+
+			<a data-route="test" href="{{baseUrl}}test">
+				<iron-icon icon="mail"></iron-icon>
+				<span>Test</span>
+			</a>
         </paper-menu>
       </paper-scroll-header-panel>
 
@@ -178,6 +183,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 <p>This is the contact section</p>
               </paper-material>
             </section>
+
+		  	<section data-route="test" tabindex="-1">
+		  		<paper-material elevation="1">
+		  			<h1 class="page-title" tabindex="-1">Test</h1>
+			  	<paper-input label="a" value="{{a}}"></paper-input>
+			  	<paper-input label="b" value="{{b}}"></paper-input>
+			  	<paper-button raised>Test</paper-button>
+			  	<iron-ajax auto
+					   url="http://darkengines.com:8080/"
+					   body='{
+						  "ServiceName":"DarkEngines.Server.MyService",
+						  "MethodName":"Add",
+						  "Parameters": {
+							"a": {{a}},
+							"b": {{b}}
+						  }
+						}'
+					   headers='{"Content-Type": "application/json", "Accept":"application/json"}'
+					   handle-as="json"
+					   on-response="handleResponse"
+					   method="POST"
+					   debounce-duration="300"></iron-ajax>
+		  		</paper-material>
+		  	</section>
           </iron-pages>
         </div>
       </paper-scroll-header-panel>

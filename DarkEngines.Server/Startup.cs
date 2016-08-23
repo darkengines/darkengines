@@ -20,6 +20,7 @@ namespace DarkEngines.Server {
 		// For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services) {
             services
+			.AddCors()
             .AddEntityFrameworkNpgsql()
             .AddDbContext<ForexDbContext>(options => options.UseNpgsql("host=127.0.0.1;userid=postgres;password=2701104$reg2rt;database=forex"))
             .AddJsonSerializer()
@@ -32,11 +33,11 @@ namespace DarkEngines.Server {
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory) {
 			loggerFactory.AddConsole();
-
 			if (env.IsDevelopment()) {
 				app.UseDeveloperExceptionPage();
 			}
-            app.UseManagedServiceMiddleware();
+			app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+			app.UseManagedServiceMiddleware();
 			//app.Run(async (context) => {
 			//	await context.Response.WriteAsync("Hello World!");
 			//});

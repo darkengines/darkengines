@@ -13,8 +13,10 @@ namespace DarkEngines.Server {
     }
     public class ManagedServiceMiddleware {
         protected HttpManagedServiceRequestHandler HttpManagedServiceRequestHandler { get; }
-        public ManagedServiceMiddleware(RequestDelegate next, HttpManagedServiceRequestHandler httpManagedServiceRequestHandler) {
+		protected RequestDelegate Next { get; }
+		public ManagedServiceMiddleware(RequestDelegate next, HttpManagedServiceRequestHandler httpManagedServiceRequestHandler) {
             HttpManagedServiceRequestHandler = httpManagedServiceRequestHandler;
+			Next = next;
         }
         public async Task Invoke(HttpContext httpContext) {
             await HttpManagedServiceRequestHandler.Process(httpContext);
