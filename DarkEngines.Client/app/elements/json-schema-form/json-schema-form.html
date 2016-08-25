@@ -1,0 +1,37 @@
+﻿<dom-module id="json-schema-form">
+    <template>
+        <style include="shared-styles">
+            :host {
+                display: block;
+            }
+
+            span,
+            input {
+                @apply(--paper-font-body2);
+            }
+        </style>
+
+        <h1 class="page-title" tabindex="-1">{{greeting}}</h1>
+        <label for="greeting-input">Update text to change the greeting.</label>
+        <!-- Listens for "input" event and sets greeting to <input>.value -->
+        <input id="greeting-input" value="{{greeting::input}}">
+    </template>
+
+    <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+          is: 'json-schema-form',
+
+        properties: {
+          schema: {
+            type: Object,
+            value: null,
+            notify: true
+          }
+        }
+      });
+    })();
+    </script>
+</dom-module>
