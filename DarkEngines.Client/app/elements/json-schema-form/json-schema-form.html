@@ -1,37 +1,127 @@
-﻿<dom-module id="json-schema-form">
-    <template>
-        <style include="shared-styles">
-            :host {
-                display: block;
-            }
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
 
-            span,
-            input {
-                @apply(--paper-font-body2);
-            }
-        </style>
+<dom-module id="json-schema-form">
+	<template>
 
-        <h1 class="page-title" tabindex="-1">{{greeting}}</h1>
-        <label for="greeting-input">Update text to change the greeting.</label>
-        <!-- Listens for "input" event and sets greeting to <input>.value -->
-        <input id="greeting-input" value="{{greeting::input}}">
-    </template>
+	</template>
 
-    <script>
-    (function() {
-      'use strict';
+	<script>
+		(function () {
+			'use strict';
+			var that = this;
+			var fillElement = function (element, schema, value, elementFactory) {
+				jsonSchemaObject.schema = schema;
+				jsonSchemaObject.elementFactory = elementFactory
+				jsonSchemaObject.value = value
+			};
+			Polymer({
+				is: 'json-schema-form',
+				properties: {
+					elementFactory: {
+						type: Object,
+						value: {
+							object: function (schema, value, elementFactory) {
+								var jsonSchemaObject = document.createElement('json-schema-object');
+								fillElement(jsonSchemaObject, schema, value, elementFactory);
+								return jsonSchemaObject;
+							},
+							array: function (schema, value, elementFactory) {
+								var jsonSchemaArray = document.createElement('json-schema-array');
+								fillElement(jsonSchemaArray, schema, value, elementFactory);
+								return jsonSchemaArray;
+							},
+							string: function (schema, value, elementFactory) {
+								var paperInput = document.createElement('paper-input');
+								paperInput.value = value;
+								return paperInput;
+							},
+						},
+						notify: true
+					}, schema: {
+						type: Object,
+						value: null,
+						notify: true
+					}, value: {
+						type: Object,
+						value: null,
+						notify: true,
+					}
+				},
+				ready: function () {
+					var element = this.elementFactory[this.schema.type](this.schema, this.value, this.elementFactory);
+					this.appendChild(element);
+				}
+			});
+		})();
+	</script>
+</dom-module>
 
-      Polymer({
-          is: 'json-schema-form',
+<dom-module id="json-schema-object">
+	<template>
+	</template>
 
-        properties: {
-          schema: {
-            type: Object,
-            value: null,
-            notify: true
-          }
-        }
-      });
-    })();
-    </script>
+	<script>
+		(function () {
+			'use strict';
+			Polymer({
+				is: 'json-schema-object',
+				properties: {
+					elementFactory: {
+						type: Object,
+						notify: true
+					}, schema: {
+						type: Object,
+						notify: true
+					}, value: {
+						value: null,
+						notify: true,
+					}
+				},
+				ready: function () {
+					var that = this;
+					var keys = Object.key(this.schema.properties);
+					keys.forEach(function (key) {
+						var property = that.schema.properties[key];
+						var element = that.elementFactory[property.type](property, that.value[key], that.elementFactory);
+						that.appendChild(element);
+					});
+				}
+			});
+		})();
+	</script>
+</dom-module>
+
+<dom-module id="json-schema-array">
+	<template>
+	</template>
+
+	<script>
+		(function () {
+			'use strict';
+			Polymer({
+				is: 'json-schema-array',
+				properties: {
+					elementFactory: {
+						type: Object,
+						notify: true
+					}, schema: {
+						type: Object,
+						notify: true
+					}, value: {
+						value: null,
+						notify: true,
+					}
+				},
+				ready: function () {
+					var that = this;
+					var keys = Object.key(this.schema.properties);
+					keys.forEach(function (key) {
+						var property = that.schema.properties[key];
+						var element = that.elementFactory[property.type](property, that.value[key], that.elementFactory);
+						that.appendChild(element);
+					});
+				}
+			});
+		})();
+	</script>
 </dom-module>
