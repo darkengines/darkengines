@@ -10,9 +10,9 @@
 			'use strict';
 			var that = this;
 			var fillElement = function (element, schema, value, elementFactory) {
-				jsonSchemaObject.schema = schema;
-				jsonSchemaObject.elementFactory = elementFactory
-				jsonSchemaObject.value = value
+				element.schema = schema;
+				element.elementFactory = elementFactory
+				element.value = value
 			};
 			Polymer({
 				is: 'json-schema-form',
@@ -33,6 +33,7 @@
 							string: function (schema, value, elementFactory) {
 								var paperInput = document.createElement('paper-input');
 								paperInput.value = value;
+								paperInput.label = schema.title;
 								return paperInput;
 							},
 						},
@@ -40,17 +41,23 @@
 					}, schema: {
 						type: Object,
 						value: null,
-						notify: true
+						notify: false,
+						readOnly: false,
+						observer: '_schemaChanged'
 					}, value: {
 						type: Object,
 						value: null,
 						notify: true,
+						observer: '_valueChanged'
 					}
 				},
-				ready: function () {
-					var element = this.elementFactory[this.schema.type](this.schema, this.value, this.elementFactory);
+				_schemaChanged: function (newSchema, oldSchema) {
+					var element = this.elementFactory[this.schema.type](newSchema, this.value, this.elementFactory);
 					this.appendChild(element);
-				}
+				},
+				_valueChanged: function (newSchema, oldSchema) {
+					
+				},
 			});
 		})();
 	</script>
@@ -63,28 +70,41 @@
 	<script>
 		(function () {
 			'use strict';
+			var onSchemaChanged = function () {
+				if (this.elementFactory) {
+					var that = this;
+					var keys = Object.keys(this.schema.properties);
+					keys.forEach(function (key) {
+						var property = that.schema.properties[key];
+						var element = that.elementFactory[property.type](property, (that.value && that.value[key]) || Object.assign({}, property.default), that.elementFactory);
+						that.appendChild(element);
+					});
+				}
+			};
 			Polymer({
 				is: 'json-schema-object',
 				properties: {
 					elementFactory: {
 						type: Object,
-						notify: true
+						notify: false,
+						readOnly: false,
+						observer: '_elementFactoryChanged'
 					}, schema: {
 						type: Object,
-						notify: true
+						notify: false,
+						readOnly: false,
+						observer: '_schemaChanged'
 					}, value: {
 						value: null,
 						notify: true,
+						readOnly: false,
 					}
 				},
-				ready: function () {
-					var that = this;
-					var keys = Object.key(this.schema.properties);
-					keys.forEach(function (key) {
-						var property = that.schema.properties[key];
-						var element = that.elementFactory[property.type](property, that.value[key], that.elementFactory);
-						that.appendChild(element);
-					});
+				_schemaChanged: function (newSchema, oldSchema) {
+					onSchemaChanged.call(this);
+				},
+				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
+					if (newElementFactory && this.schema) onSchemaChanged.call(this);
 				}
 			});
 		})();
@@ -103,7 +123,8 @@
 				properties: {
 					elementFactory: {
 						type: Object,
-						notify: true
+						notify: false,
+						readOnly: false
 					}, schema: {
 						type: Object,
 						notify: true

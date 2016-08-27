@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <!--
 @license
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
@@ -206,17 +206,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 					   method="POST"
 					   debounce-duration="300"></iron-ajax>
 		  		</paper-material>
+				  <script>
+				  	var x = {"firstName": "caca", "lastName": "pipi"};
+				  </script>
+				  {{x}}
 		  		<json-schema-form schema='{
 					"type": "object",
 					"properties": {
 						"firstName": {
+							"title": "Firstname",
 							"type": "string"
 						},
 						"lastName": {
+							"title": "Lastname",
 							"type": "string"
 						}
 					}
-				}'></json-schema-form>
+				}' value='{"firstName": "caca", "lastName": "pipi"}'></json-schema-form>
 		  	</section>
           </iron-pages>
         </div>
