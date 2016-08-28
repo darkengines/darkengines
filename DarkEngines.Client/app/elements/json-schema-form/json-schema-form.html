@@ -1,18 +1,35 @@
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 
 <dom-module id="json-schema-form">
-	<template>
-
-	</template>
+	<template>{{value}}</template>
 
 	<script>
 		(function () {
 			'use strict';
 			var that = this;
+			var root = null;
 			var fillElement = function (element, schema, value, elementFactory) {
 				element.schema = schema;
 				element.elementFactory = elementFactory
-				element.value = value
+				element.value = value;
+			};
+			var processElementFactory = function () {
+				processSchema.call(this);
+			}
+			var processSchema = function () {
+				if (this.elementFactory && this.schema) {
+					while (this.firstChild) {
+						this.removeChild(this.firstChild);
+					}
+					root = this.elementFactory[this.schema.type](this.schema, this.value, this.elementFactory);
+					this.appendChild(root);
+					processValue.call(this);
+				}
+			};
+			var processValue = function () {
+				if (root) {
+					root.value = this.value;
+				}
 			};
 			Polymer({
 				is: 'json-schema-form',
@@ -37,7 +54,9 @@
 								return paperInput;
 							},
 						},
-						notify: true
+						notify: false,
+						readOnly: false,
+						observer: '_elementFactoryChanged'
 					}, schema: {
 						type: Object,
 						value: null,
@@ -48,15 +67,19 @@
 						type: Object,
 						value: null,
 						notify: true,
+						readOnly: false,
+						reflect: true,
 						observer: '_valueChanged'
 					}
 				},
-				_schemaChanged: function (newSchema, oldSchema) {
-					var element = this.elementFactory[this.schema.type](newSchema, this.value, this.elementFactory);
-					this.appendChild(element);
+				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
+					if (newElementFactory != oldElementFactory) processElementFactory.call(this)
 				},
-				_valueChanged: function (newSchema, oldSchema) {
-					
+				_schemaChanged: function (newSchema, oldSchema) {
+					if (newSchema != oldSchema) processSchema.call(this);
+				},
+				_valueChanged: function (newValue, oldValue) {
+					if (newValue != oldValue) processValue.call(this);
 				},
 			});
 		})();
@@ -70,14 +93,32 @@
 	<script>
 		(function () {
 			'use strict';
-			var onSchemaChanged = function () {
-				if (this.elementFactory) {
+			var children = {};
+			var processElementFactory = function () {
+				if (this.elementFactory) processSchema.call(this);
+			}
+			var processSchema = function () {
+				if (this.elementFactory && this.schema) {
 					var that = this;
 					var keys = Object.keys(this.schema.properties);
 					keys.forEach(function (key) {
 						var property = that.schema.properties[key];
-						var element = that.elementFactory[property.type](property, (that.value && that.value[key]) || Object.assign({}, property.default), that.elementFactory);
-						that.appendChild(element);
+						var defaultValue = property.type == 'object' ? Object.assign({}, property.default)
+							: property.type == 'array' ? Object.assign([], property.default)
+							: property.default;
+						var child = that.elementFactory[property.type](property, (that.value && that.value[key]) || defaultValue, that.elementFactory);
+						children[key] = child;
+						that.appendChild(child);
+					});
+				}
+			};
+			var processValue = function () {
+				if (children) {
+					var keys = Object.keys(this.schema.properties);
+					var that = this;
+					keys.forEach(function (key) {
+						var property = that.schema.properties[key];
+						children[key].value = that.value[key];
 					});
 				}
 			};
@@ -98,14 +139,19 @@
 						value: null,
 						notify: true,
 						readOnly: false,
+						reflect: true,
+						observer: '_valueChanged'
 					}
 				},
-				_schemaChanged: function (newSchema, oldSchema) {
-					onSchemaChanged.call(this);
-				},
 				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
-					if (newElementFactory && this.schema) onSchemaChanged.call(this);
-				}
+					if (newElementFactory != oldElementFactory) processElementFactory.call(this)
+				},
+				_schemaChanged: function (newSchema, oldSchema) {
+					if (newSchema != oldSchema) processSchema.call(this);
+				},
+				_valueChanged: function (newValue, oldValue) {
+					if (newValue != oldValue) processValue.call(this);
+				},
 			});
 		})();
 	</script>
