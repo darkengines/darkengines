@@ -209,7 +209,7 @@
 					value: {
 						type: Object,
 						value: {value: 'test'},
-						reflect: true,
+						reflectToAttribute: true,
 						notify: true
 					}
 				},
@@ -221,6 +221,7 @@
 				},
 				_forwardInstanceProp: function(inst, prop, value) {
 					this.value.value = value;
+					this.notifyPath('value.value', this.value.value);
 				},
 				_forwardInstancePath: function(inst, path, value) {
 				
