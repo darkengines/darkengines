@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <!--
 @license
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
@@ -190,42 +190,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 						<section data-route="test" tabindex="-1">
 							<paper-material elevation="1">
 								<h1 class="page-title" tabindex="-1">Test</h1>
-								{{z.value}}
-								<de-test value="{{z}}"></de-test>
-								<paper-input label="a" value="{{a}}"></paper-input>
-								<paper-input label="b" value="{{b}}"></paper-input>
-								<paper-button raised>Test</paper-button>
-								<iron-ajax auto
-										   url="http://darkengines.com:8080/"
-										   body='{
-											  "ServiceName":"DarkEngines.Server.MyService",
-											  "MethodName":"Add",
-											  "Parameters": {
-												"a": {{a}},
-												"b": {{b}}
-											  }
-											}'
-										   headers='{"Content-Type": "application/json", "Accept":"application/json"}'
-										   handle-as="json"
-										   on-response="handleResponse"
-										   method="POST"
-										   debounce-duration="300"></iron-ajax>
-							</paper-material>
-
-							{{x}}
-							<json-schema-form schema='{
-					"type": "object",
-					"properties": {
-						"firstName": {
-							"title": "Firstname",
-							"type": "string"
-						},
-						"lastName": {
-							"title": "Lastname",
-							"type": "string"
-						}
-					}
-				}' value='{"firstName": "Florent", "lastName": "Tollin de Rivarol"}'></json-schema-form>
+								<!--{{z}}
+								<de-test value="{{z}}"></de-test>-->
+								<darkengines-json value="{{x}}"></darkengines-json>
+								<json-schema-form schema='{
+									"type": "object",
+									"properties": {
+										"firstName": {
+											"title": "Firstname",
+											"type": "string"
+										},
+										"lastName": {
+											"title": "Lastname",
+											"type": "string"
+										}
+									},
+									"default": {}
+								}' value='{{x}}'></json-schema-form>
 						</section>
 					</iron-pages>
 				</div>

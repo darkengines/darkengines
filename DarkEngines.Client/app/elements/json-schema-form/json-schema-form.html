@@ -9,7 +9,7 @@
 			var fillElement = function (element, schema, value, elementFactory) {
 				element.schema = schema;
 				element.elementFactory = elementFactory
-				element.value = value;
+				//element.value = value;
 			};
 			var processElementFactory = function () {
 				processSchema.call(this);
@@ -17,22 +17,47 @@
 			var processSchema = function () {
 				if (this.elementFactory && this.schema) {
 					var template = document.createElement('template');
-					while (this.firstChild) {
-						this.removeChild(this.firstChild);
-					}
-					root = this.elementFactory[this.schema.type](this.schema, this.value, this.elementFactory);
-					template.appendChild(root);
-					this.appendChild(template);
-					processValue.call(this);
+					var defaultValue = this.schema.type == 'object' ? Object.assign({}, this.schema.default)
+					: this.schema.type == 'array' ? Object.assign([], this.schema.default)
+					: this.schema.default;
+					var element = this.elementFactory[this.schema.type](this.schema, defaultValue, this.elementFactory);
+					Polymer.dom(element).setAttribute('value', '{{value}}');
+					Polymer.dom(template.content).appendChild(element);
+					this.templatize(template);
+					var instance = this.stamp({});
+					Polymer.dom(this.root).appendChild(instance.root);
+					//processValue.call(this);
 				}
 			};
 			var processValue = function () {
 				if (root) {
-					root.value = this.value;
+					var defaultValue = this.schema.type == 'object' ? Object.assign({}, this.schema.default)
+							: this.schema.type == 'array' ? Object.assign([], this.schema.default)
+							: this.schema.default;
+					Polymer.dom(root).setAttribute('value', this.value || defaultValue);
 				}
 			};
 			Polymer({
 				is: 'json-schema-form',
+				behaviors: [
+					Polymer.Templatizer
+				],
+				_forwardParentProp: function (prop, value) {
+
+				},
+				_forwardParentPath: function (path, value) {
+
+				},
+				_forwardInstanceProp: function (inst, prop, value) {
+					this.value = value;
+					this.notifyPath('value', this.value);
+				},
+				_forwardInstancePath: function (inst, path, value) {
+
+				},
+				_instanceProps: {
+					value: true
+				},
 				properties: {
 					elementFactory: {
 						type: Object,
@@ -49,7 +74,7 @@
 							},
 							string: function (schema, value, elementFactory) {
 								var paperInput = document.createElement('paper-input');
-								paperInput.value = value;
+								Polymer.dom(paperInput).setAttribute('value', value);
 								paperInput.label = schema.title;
 								return paperInput;
 							},
@@ -65,7 +90,6 @@
 						observer: '_schemaChanged'
 					}, value: {
 						type: Object,
-						value: null,
 						notify: true,
 						readOnly: false,
 						reflect: true,
@@ -79,7 +103,7 @@
 					if (newSchema != oldSchema) processSchema.call(this);
 				},
 				_valueChanged: function (newValue, oldValue) {
-					if (newValue != oldValue) processValue.call(this);
+					//if (newValue != oldValue) processValue.call(this);
 				},
 			});
 		})();
@@ -87,9 +111,6 @@
 </dom-module>
 
 <dom-module id="json-schema-object">
-	<template>
-	</template>
-
 	<script>
 		(function () {
 			'use strict';
@@ -99,20 +120,20 @@
 			}
 			var processSchema = function () {
 				if (this.elementFactory && this.schema) {
+					var template = document.createElement('template');
 					var that = this;
 					var keys = Object.keys(this.schema.properties);
 					keys.forEach(function (key) {
 						var property = that.schema.properties[key];
-						var defaultValue = property.type == 'object' ? Object.assign({}, property.default)
-							: property.type == 'array' ? Object.assign([], property.default)
-							: property.default;
-						var child = that.elementFactory[property.type](property, (that.value && that.value[key]) || defaultValue, that.elementFactory);
-						child.addEventListener('change', function (sender, e) {
-							alert('mamadou');
-						});
+						var child = that.elementFactory[property.type](property, that.value, that.elementFactory);
+						child.setAttribute('value', '{{value.'+key+'}}');
 						children[key] = child;
-						that.appendChild(child);
+						Polymer.dom(template.content).appendChild(child);
 					});
+					this.templatize(template);
+					var instance = this.stamp({});
+					Polymer.dom(this.root).appendChild(instance.root);
+					//processValue.call(this);
 				}
 			};
 			var processValue = function () {
@@ -121,12 +142,35 @@
 					var that = this;
 					keys.forEach(function (key) {
 						var property = that.schema.properties[key];
-						children[key].value = that.value[key];
+						//children[key].value = that.value[key];
+						var defaultValue = property.type == 'object' ? Object.assign({}, property.default)
+							: property.type == 'array' ? Object.assign([], property.default)
+							: property.default;
+						Polymer.dom(children[key]).setAttribute('value', that.value && that.value[key] || defaultValue);
 					});
 				}
 			};
 			Polymer({
 				is: 'json-schema-object',
+				behaviors: [
+					Polymer.Templatizer
+				],
+				_forwardParentProp: function (prop, value) {
+
+				},
+				_forwardParentPath: function (path, value) {
+
+				},
+				_forwardInstanceProp: function (inst, prop, value) {
+					this.value = value;
+					this.notifyPath('value', this.value);
+				},
+				_forwardInstancePath: function (inst, path, value) {
+
+				},
+				_instanceProps: {
+					value: true
+				},
 				properties: {
 					elementFactory: {
 						type: Object,
@@ -139,7 +183,6 @@
 						readOnly: false,
 						observer: '_schemaChanged'
 					}, value: {
-						value: null,
 						notify: true,
 						readOnly: false,
 						reflect: true,
@@ -153,7 +196,7 @@
 					if (newSchema != oldSchema) processSchema.call(this);
 				},
 				_valueChanged: function (newValue, oldValue) {
-					if (newValue != oldValue) processValue.call(this);
+					//if (newValue != oldValue) processValue.call(this);
 				},
 			});
 		})();
@@ -207,24 +250,24 @@
 				],
 				properties: {
 					value: {
-						type: Object,
-						value: {value: 'test'},
+						type: String,
+						value: 'qsdqsdqsdqsd',
 						reflectToAttribute: true,
 						notify: true
 					}
 				},
-				_forwardParentProp: function(prop, value) {
+				_forwardParentProp: function (prop, value) {
 
 				},
-				_forwardParentPath: function(path, value) {
+				_forwardParentPath: function (path, value) {
 
 				},
-				_forwardInstanceProp: function(inst, prop, value) {
-					this.value.value = value;
-					this.notifyPath('value.value', this.value.value);
+				_forwardInstanceProp: function (inst, prop, value) {
+					this.value = value;
+					this.notifyPath('value', this.value);
 				},
-				_forwardInstancePath: function(inst, path, value) {
-				
+				_forwardInstancePath: function (inst, path, value) {
+
 				},
 				_instanceProps: {
 					value: true
@@ -238,8 +281,33 @@
 					Polymer.dom(template.content).appendChild(input);
 					Polymer.dom(template.content).appendChild(input2);
 					this.templatize(template);
-					var instance = this.stamp(this.value);
+					var instance = this.stamp();
 					Polymer.dom(this.root).appendChild(instance.root);
+				}
+			});
+		})();
+	</script>
+</dom-module>
+
+<dom-module id="darkengines-json">
+	<template>
+		{{json}}
+	</template>
+
+	<script>
+		(function () {
+			'use strict';
+			Polymer({
+				is: 'darkengines-json',
+				properties: {
+					value: Object,
+					json: {
+						type: String,
+						computed: 'stringify(value)'
+					}
+				},
+				stringify: function (value) {
+					return JSON.stringify(value);
 				}
 			});
 		})();
