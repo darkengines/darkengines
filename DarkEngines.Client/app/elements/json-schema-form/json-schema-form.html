@@ -1,8 +1,6 @@
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 
 <dom-module id="json-schema-form">
-	<template>{{value}}</template>
-
 	<script>
 		(function () {
 			'use strict';
@@ -18,11 +16,13 @@
 			}
 			var processSchema = function () {
 				if (this.elementFactory && this.schema) {
+					var template = document.createElement('template');
 					while (this.firstChild) {
 						this.removeChild(this.firstChild);
 					}
 					root = this.elementFactory[this.schema.type](this.schema, this.value, this.elementFactory);
-					this.appendChild(root);
+					template.appendChild(root);
+					this.appendChild(template);
 					processValue.call(this);
 				}
 			};
@@ -107,6 +107,9 @@
 							: property.type == 'array' ? Object.assign([], property.default)
 							: property.default;
 						var child = that.elementFactory[property.type](property, (that.value && that.value[key]) || defaultValue, that.elementFactory);
+						child.addEventListener('change', function (sender, e) {
+							alert('mamadou');
+						});
 						children[key] = child;
 						that.appendChild(child);
 					});
@@ -187,6 +190,55 @@
 						var element = that.elementFactory[property.type](property, that.value[key], that.elementFactory);
 						that.appendChild(element);
 					});
+				}
+			});
+		})();
+	</script>
+</dom-module>
+
+<dom-module id="de-test">
+	<script>
+		(function () {
+			'use strict';
+			Polymer({
+				is: 'de-test',
+				behaviors: [
+					Polymer.Templatizer
+				],
+				properties: {
+					value: {
+						type: Object,
+						value: {value: 'test'},
+						reflect: true,
+						notify: true
+					}
+				},
+				_forwardParentProp: function(prop, value) {
+
+				},
+				_forwardParentPath: function(path, value) {
+
+				},
+				_forwardInstanceProp: function(inst, prop, value) {
+					this.value.value = value;
+				},
+				_forwardInstancePath: function(inst, path, value) {
+				
+				},
+				_instanceProps: {
+					value: true
+				},
+				ready: function () {
+					var template = document.createElement('template');
+					var input = document.createElement('paper-input');
+					var input2 = document.createElement('paper-input');
+					input.setAttribute('value', '{{value}}');
+					input2.setAttribute('value', '{{value}}');
+					Polymer.dom(template.content).appendChild(input);
+					Polymer.dom(template.content).appendChild(input2);
+					this.templatize(template);
+					var instance = this.stamp(this.value);
+					Polymer.dom(this.root).appendChild(instance.root);
 				}
 			});
 		})();
