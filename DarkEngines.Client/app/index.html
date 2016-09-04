@@ -190,36 +190,54 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         <section data-route="test" tabindex="-1">
                             <paper-material elevation="1">
                                 <h1 class="page-title" tabindex="-1">Test</h1>
-                                <!--{{z}}
-                                <de-test value="{{z}}"></de-test>-->
                                 <darkengines-json value="{{x}}"></darkengines-json>
-                                <json-schema-form schema='{
-									"type": "object",
-									"properties": {
-										"firstname": {
-											"title": "Firstname",
-											"type": "string"
-										},
-										"lastname": {
-											"title": "Lastname",
-											"type": "string"
-										},
-                                        "address": {
-											"type": "object",
-                                            "properties": {
-										        "city": {
-											        "title": "City",
-											        "type": "string"
-										        },
-										        "country": {
-											        "title": "Country",
-											        "type": "string"
-										        }
-                                            }
-										}
-									},
-									"default": {}
-								}' value='{{x}}'></json-schema-form>
+                                <div>
+                                    <div style="display:inline-block; width:49%; vertical-align: top">
+                                        <darkengines-json-editor label="Schema" value='{
+	"type":"object",
+	"properties":{
+		"firstname":{
+			"title":"Firstname",
+			"type":"string"
+		},
+		"lastname":{
+			"title":"Lastname",
+			"type":"string"
+		},
+		"address":{
+			"title": "Address",
+			"type":"object",
+			"properties":{
+				"city":{
+					"title":"City",
+					"type":"string"
+				},
+				"country":{
+					"title":"Country",
+					"type":"string"
+				}
+			}
+		},
+		"car": {
+			"title": "Car",
+			"type": "object",
+			"properties": {
+				"color": {
+					"title": "Color",
+					"type": "string"
+				}
+			}
+		}
+	},
+	"default":{
+
+	}
+}' json="{{y}}"></darkengines-json-editor>
+                                    </div>
+                                    <div style="display:inline-block; width:49%; vertical-align: top">
+                                        <json-schema-form schema="{{y}}" value='{{x}}'></json-schema-form>
+                                    </div>
+                                </div>
                         </section>
                     </iron-pages>
                 </div>
@@ -247,7 +265,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </platinum-sw-cache>
         </platinum-sw-register>
         -->
-
     </template>
 
     <!-- build:js scripts/app.js -->

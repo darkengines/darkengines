@@ -1,4 +1,5 @@
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="json-schema-form">
     <script>
@@ -10,6 +11,10 @@
             };
             var onSchemaChanged = function () {
                 if (this.elementFactory && this.schema) {
+                    var root = Polymer.dom(this.root);
+                    while (root.firstChild) {
+                        root.removeChild(root.firstChild);
+                    }
                     var template = document.createElement('template');
                     var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
                     Polymer.dom(template.content).appendChild(element);
@@ -25,7 +30,6 @@
             };
             var onValueChanged = function () {
                 if (templateInstance) {
-                    //var model = modelForElement(templateInstance);
                     templateInstance.value = this.value;
                 }
             };
@@ -35,7 +39,7 @@
 					Polymer.Templatizer
                 ],
                 _forwardParentProp: function (prop, value) {
-                    
+
                 },
                 _forwardParentPath: function (path, value) {
 
@@ -119,15 +123,30 @@
             var onSchemaChanged = function () {
                 if (this.elementFactory && this.schema) {
                     var template = document.createElement('template');
-                    var keys = Object.keys(this.schema.properties);
-                    var that = this;
-                    keys.forEach(function (key, index) {
-                        var property = that.schema.properties[key];
-                        var element = that.elementFactory[property.type]('elementFactory', 'schema.properties.' + key, 'value.' + key);
-                        Polymer.dom(template.content).appendChild(element);
-                    });
+                    if (this.schema.properties) {
+                        var keys = Object.keys(this.schema.properties);
+                        var that = this;
+                        keys.forEach(function (key, index) {
+                            var property = that.schema.properties[key];
+                            if (property.type == 'object') {
+                                var buttonTemplate = document.createElement('template');
+                                Polymer.dom(buttonTemplate).setAttribute('is', 'dom-if');
+                                Polymer.dom(buttonTemplate).setAttribute('if', '{{!value.' + key + '}}');
+                                var button = document.createElement('paper-button');
+                                button.setAttribute('raised', null);
+                                button.textContent = 'Create [[schema.properties.' + key + '.title]]';
+                                button.addEventListener('click', function () {
+                                    that.value[key] = {};
+                                });
+                                Polymer.dom(buttonTemplate.content).appendChild(button);
+                                Polymer.dom(template.content).appendChild(buttonTemplate);
+                            }
+                            var element = that.elementFactory[property.type]('elementFactory', 'schema.properties.' + key, 'value.' + key);
+                            Polymer.dom(template.content).appendChild(element);
+                        });
+                    }
                     this.templatize(template);
-                    
+
                     onValueChanged.call(this);
                 }
             };
@@ -249,7 +268,7 @@
 
 <dom-module id="darkengines-json">
     <template>
-        {{json}}
+       <pre>{{json}}</pre>
     </template>
 
     <script>
@@ -265,7 +284,42 @@
                     }
                 },
                 stringify: function (value) {
-                    return JSON.stringify(value);
+                    return JSON.stringify(value, null, '\t');
+                }
+            });
+        })();
+    </script>
+</dom-module>
+
+<dom-module id="darkengines-json-editor">
+    <template>
+        <paper-textarea multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
+    </template>
+
+    <script>
+        (function () {
+            'use strict';
+            Polymer({
+                is: 'darkengines-json-editor',
+                properties: {
+                    value: {
+                        type: String,
+                        reflect: true,
+                        notify: true,
+                        observer: '_onValueChanged'
+                    },
+                    json: {
+                        type: Object,
+                        readOnly: false,
+                        reflect: true,
+                        notify: true,
+                    },
+                    label: {
+                        type: String
+                    }
+                },
+                _onValueChanged: function (newValue, oldValue) {
+                    this.json = JSON.parse(newValue);
                 }
             });
         })();
