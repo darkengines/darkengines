@@ -2,326 +2,331 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="json-schema-form">
-    <script>
-        (function () {
-            'use strict';
-            var templateInstance = null;
-            var onElementFactoryChanged = function () {
-                onSchemaChanged.call(this);
-            };
-            var onSchemaChanged = function () {
-                if (this.elementFactory && this.schema) {
-                    var root = Polymer.dom(this.root);
-                    while (root.firstChild) {
-                        root.removeChild(root.firstChild);
-                    }
-                    var template = document.createElement('template');
-                    var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
-                    Polymer.dom(template.content).appendChild(element);
-                    this.templatize(template);
-                    templateInstance = this.stamp({
-                        elementFactory: this.elementFactory,
-                        schema: this.schema,
-                        value: this.value
-                    });
-                    Polymer.dom(this.root).appendChild(templateInstance.root);
-                    onValueChanged.call(this);
-                }
-            };
-            var onValueChanged = function () {
-                if (templateInstance) {
-                    templateInstance.value = this.value;
-                }
-            };
-            Polymer({
-                is: 'json-schema-form',
-                behaviors: [
+	<script>
+		(function () {
+			'use strict';
+			var templateInstance = null;
+			var onElementFactoryChanged = function () {
+				onSchemaChanged.call(this);
+			};
+			var onSchemaChanged = function () {
+				if (this.elementFactory && this.schema) {
+					var root = Polymer.dom(this.root);
+					while (root.firstChild) {
+						root.removeChild(root.firstChild);
+					}
+					var template = document.createElement('template');
+					var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
+					Polymer.dom(template.content).appendChild(element);
+					this.templatize(template);
+					templateInstance = this.stamp({
+						elementFactory: this.elementFactory,
+						schema: this.schema,
+						value: this.value
+					});
+					Polymer.dom(this.root).appendChild(templateInstance.root);
+					onValueChanged.call(this);
+				}
+			};
+			var onValueChanged = function () {
+				if (templateInstance) {
+					templateInstance.value = this.value;
+				}
+			};
+			Polymer({
+				is: 'json-schema-form',
+				behaviors: [
 					Polymer.Templatizer
-                ],
-                _forwardParentProp: function (prop, value) {
+				],
+				_forwardParentProp: function (prop, value) {
 
-                },
-                _forwardParentPath: function (path, value) {
+				},
+				_forwardParentPath: function (path, value) {
 
-                },
-                _forwardInstanceProp: function (inst, prop, value) {
+				},
+				_forwardInstanceProp: function (inst, prop, value) {
 
-                },
-                _forwardInstancePath: function (inst, path, value) {
-                    //var propertyNames = path.split();
-                    //var lastPropertyName = propertyNames.splice(propertyNames.length - 1, 1);
-                    //var parent = propertyNames.reduce(function (parent, propertyName) {
-                    //    return parent[propertyName];
-                    //}, this);
-                    this.set(path, value);
-                },
-                _instanceProps: {
-                    elementFactory: true,
-                    schema: true,
-                    value: true
-                },
-                properties: {
-                    elementFactory: {
-                        type: Object,
-                        value: {
-                            object: function (elementFactoryPath, schemaPath, valuePath) {
-                                var element = document.createElement('json-schema-object');
-                                Polymer.dom(element).setAttribute('element-factory', '{{' + elementFactoryPath + '}}');
-                                Polymer.dom(element).setAttribute('schema', '{{' + schemaPath + '}}');
-                                Polymer.dom(element).setAttribute('value', '{{' + valuePath + '}}');
-                                return element;
-                            },
-                            array: function (schema, value, elementFactory) {
+				},
+				_forwardInstancePath: function (inst, path, value) {
+					//var propertyNames = path.split();
+					//var lastPropertyName = propertyNames.splice(propertyNames.length - 1, 1);
+					//var parent = propertyNames.reduce(function (parent, propertyName) {
+					//    return parent[propertyName];
+					//}, this);
+					this.set(path, value);
+				},
+				_instanceProps: {
+					elementFactory: true,
+					schema: true,
+					value: true
+				},
+				properties: {
+					elementFactory: {
+						type: Object,
+						value: {
+							object: function (elementFactoryPath, schemaPath, valuePath) {
+								var element = document.createElement('json-schema-object');
+								Polymer.dom(element).setAttribute('element-factory', '{{' + elementFactoryPath + '}}');
+								Polymer.dom(element).setAttribute('schema', '{{' + schemaPath + '}}');
+								Polymer.dom(element).setAttribute('value', '{{' + valuePath + '}}');
+								return element;
+							},
+							array: function (schema, value, elementFactory) {
 
-                            },
-                            string: function (elementFactoryPath, schemaPath, valuePath) {
-                                var element = document.createElement('paper-input');
-                                Polymer.dom(element).setAttribute('label', '{{' + schemaPath + '.title}}');
-                                Polymer.dom(element).setAttribute('value', '{{' + valuePath + '}}');
-                                return element;
-                            },
-                        },
-                        notify: false,
-                        readOnly: false,
-                        observer: '_elementFactoryChanged'
-                    }, schema: {
-                        type: Object,
-                        value: null,
-                        notify: false,
-                        readOnly: false,
-                        observer: '_schemaChanged'
-                    }, value: {
-                        type: Object,
-                        notify: true,
-                        readOnly: false,
-                        reflect: true,
-                        observer: '_valueChanged',
-                        value: { firstname: 'Florent', lastname: 'Tollin de Rivarol', address: {} }
-                    }
-                },
-                _elementFactoryChanged: function (newElementFactory, oldElementFactory) {
-                    if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
-                },
-                _schemaChanged: function (newSchema, oldSchema) {
-                    if (newSchema != oldSchema) onSchemaChanged.call(this);
-                },
-                _valueChanged: function (newValue, oldValue) {
-                    if (newValue != oldValue) onValueChanged.call(this);
-                },
-            });
-        })();
-    </script>
+							},
+							string: function (elementFactoryPath, schemaPath, valuePath) {
+								var element = document.createElement('paper-input');
+								Polymer.dom(element).setAttribute('label', '{{' + schemaPath + '.title}}');
+								Polymer.dom(element).setAttribute('value', '{{' + valuePath + '}}');
+								return element;
+							},
+						},
+						notify: false,
+						readOnly: false,
+						observer: '_elementFactoryChanged'
+					}, schema: {
+						type: Object,
+						value: null,
+						notify: false,
+						readOnly: false,
+						observer: '_schemaChanged'
+					}, value: {
+						type: Object,
+						notify: true,
+						readOnly: false,
+						reflect: true,
+						observer: '_valueChanged',
+						value: { firstname: 'Florent', lastname: 'Tollin de Rivarol', address: {} }
+					}
+				},
+				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
+					if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
+				},
+				_schemaChanged: function (newSchema, oldSchema) {
+					if (newSchema != oldSchema) onSchemaChanged.call(this);
+				},
+				_valueChanged: function (newValue, oldValue) {
+					if (newValue != oldValue) onValueChanged.call(this);
+				},
+			});
+		})();
+	</script>
 </dom-module>
 
 <dom-module id="json-schema-object">
-    <script>
-        (function () {
-            'use strict';
-            var onElementFactoryChanged = function () {
-                onSchemaChanged.call(this);
-            };
-            var onSchemaChanged = function () {
-                if (this.elementFactory && this.schema) {
-                    var template = document.createElement('template');
-                    if (this.schema.properties) {
-                        var keys = Object.keys(this.schema.properties);
-                        var that = this;
-                        keys.forEach(function (key, index) {
-                            var property = that.schema.properties[key];
-                            if (property.type == 'object') {
-                                var buttonTemplate = document.createElement('template');
-                                Polymer.dom(buttonTemplate).setAttribute('is', 'dom-if');
-                                Polymer.dom(buttonTemplate).setAttribute('if', '{{!value.' + key + '}}');
-                                var button = document.createElement('paper-button');
-                                button.setAttribute('raised', null);
-                                button.textContent = 'Create [[schema.properties.' + key + '.title]]';
-                                button.addEventListener('click', function () {
-                                    that.value[key] = {};
-                                });
-                                Polymer.dom(buttonTemplate.content).appendChild(button);
-                                Polymer.dom(template.content).appendChild(buttonTemplate);
-                            }
-                            var element = that.elementFactory[property.type]('elementFactory', 'schema.properties.' + key, 'value.' + key);
-                            Polymer.dom(template.content).appendChild(element);
-                        });
-                    }
-                    this.templatize(template);
+	<template>
+		<template is="dom-if" if="{{ !value }}">
+			<paper-button>Add</paper-button>
+		</template>
+	</template>
+	<script>
+		(function () {
+			'use strict';
+			var onElementFactoryChanged = function () {
+				onSchemaChanged.call(this);
+			};
+			var onSchemaChanged = function () {
+				var objectElement = document.querySelector('#object');
+				this._map = {};
+				if (this.elementFactory && this.schema) {
+					if (this.schema.properties) {
+						var keys = Object.keys(this.schema.properties);
+						var that = this;
 
-                    onValueChanged.call(this);
-                }
-            };
-            var onValueChanged = function () {
-                if (this.value) {
-                    var templateInstance = this.stamp({
-                        elementFactory: this.elementFactory,
-                        schema: this.schema,
-                        value: this.value
-                    });
-                    Polymer.dom(this.root).appendChild(templateInstance.root);
-                }
-            };
-            Polymer({
-                is: 'json-schema-object',
-                behaviors: [
+						keys.forEach(function (key, index) {
+							var template = document.createElement('template');
+							var property = that.schema.properties[key];
+							var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
+							Polymer.dom(template.content).appendChild(element);
+							that.templatize(template);
+							var templateInstance = that.stamp({
+								elementFactory: that.elementFactory,
+								schema: that.schema.properties[key],
+								value: that.value && that.value[key]
+							});
+							that._map[key] = templateInstance;
+							Polymer.dom(that.root).appendChild(templateInstance.root);
+						});
+					}
+					onValueChanged.call(this);
+				}
+			};
+			var onValueChanged = function () {
+				if (this.value && this.value instanceof Object) {
+					var keys = Object.keys(this.schema.properties);
+					var that = this;
+					keys.forEach(function (key) {
+						if (that._map[key]) that._map[key].value = that.value[key];
+					});
+				}
+			};
+			Polymer({
+				is: 'json-schema-object',
+				_hasNoValue: function (value) {
+					var result = !(value instanceof Object && value);
+					return result;
+				},
+				behaviors: [
 					Polymer.Templatizer
-                ],
-                _forwardParentProp: function (prop, value) {
+				],
+				_forwardParentProp: function (prop, value) {
 
-                },
-                _forwardParentPath: function (path, value) {
+				},
+				_forwardParentPath: function (path, value) {
 
-                },
-                _forwardInstanceProp: function (inst, prop, value) {
+				},
+				_forwardInstanceProp: function (inst, prop, value) {
 
-                },
-                _forwardInstancePath: function (inst, path, value) {
-                    this.set(path, value);
-                },
-                _instanceProps: {
-                    elementFactory: true,
-                    schema: true,
-                    value: true
-                },
-                properties: {
-                    elementFactory: {
-                        type: Object,
-                        notify: false,
-                        readOnly: false,
-                        observer: '_elementFactoryChanged'
-                    }, schema: {
-                        type: Object,
-                        value: null,
-                        notify: false,
-                        readOnly: false,
-                        observer: '_schemaChanged'
-                    }, value: {
-                        type: Object,
-                        notify: true,
-                        readOnly: false,
-                        reflect: true,
-                        observer: '_valueChanged'
-                    }
-                },
-                _elementFactoryChanged: function (newElementFactory, oldElementFactory) {
-                    if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
-                },
-                _schemaChanged: function (newSchema, oldSchema) {
-                    if (newSchema != oldSchema) onSchemaChanged.call(this);
-                },
-                _valueChanged: function (newValue, oldValue) {
-                    if (newValue != oldValue) onValueChanged.call(this);
-                },
-            });
-        })();
-    </script>
+				},
+				_forwardInstancePath: function (inst, path, value) {
+					this.set(path, value);
+				},
+				_instanceProps: {
+					elementFactory: true,
+					schema: true,
+					value: true
+				},
+				properties: {
+					elementFactory: {
+						type: Object,
+						notify: false,
+						readOnly: false,
+						observer: '_elementFactoryChanged'
+					}, schema: {
+						type: Object,
+						value: null,
+						notify: false,
+						readOnly: false,
+						observer: '_schemaChanged'
+					}, value: {
+						type: Object,
+						notify: true,
+						readOnly: false,
+						reflect: true,
+						observer: '_valueChanged',
+						value: null,
+					}
+				},
+				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
+					if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
+				},
+				_schemaChanged: function (newSchema, oldSchema) {
+					if (newSchema != oldSchema) onSchemaChanged.call(this);
+				},
+				_valueChanged: function (newValue, oldValue) {
+					if (newValue != oldValue) onValueChanged.call(this);
+				},
+			});
+		})();
+	</script>
 </dom-module>
 
 <dom-module id="de-test">
-    <script>
-        (function () {
-            'use strict';
-            Polymer({
-                is: 'de-test',
-                behaviors: [
+	<script>
+		(function () {
+			'use strict';
+			Polymer({
+				is: 'de-test',
+				behaviors: [
 					Polymer.Templatizer
-                ],
-                properties: {
-                    value: {
-                        type: String,
-                        value: 'qsdqsdqsdqsd',
-                        reflectToAttribute: true,
-                        notify: true
-                    }
-                },
-                _forwardParentProp: function (prop, value) {
+				],
+				properties: {
+					value: {
+						type: String,
+						value: 'qsdqsdqsdqsd',
+						reflectToAttribute: true,
+						notify: true
+					}
+				},
+				_forwardParentProp: function (prop, value) {
 
-                },
-                _forwardParentPath: function (path, value) {
+				},
+				_forwardParentPath: function (path, value) {
 
-                },
-                _forwardInstanceProp: function (inst, prop, value) {
-                    this.value = value;
-                    this.notifyPath('value', this.value);
-                },
-                _forwardInstancePath: function (inst, path, value) {
+				},
+				_forwardInstanceProp: function (inst, prop, value) {
+					this.value = value;
+					this.notifyPath('value', this.value);
+				},
+				_forwardInstancePath: function (inst, path, value) {
 
-                },
-                _instanceProps: {
-                    value: true
-                },
-                ready: function () {
-                    var template = document.createElement('template');
-                    var input = document.createElement('paper-input');
-                    var input2 = document.createElement('paper-input');
-                    input.setAttribute('value', '{{value}}');
-                    input2.setAttribute('value', '{{value}}');
-                    Polymer.dom(template.content).appendChild(input);
-                    Polymer.dom(template.content).appendChild(input2);
-                    this.templatize(template);
-                    var instance = this.stamp();
-                    Polymer.dom(this.root).appendChild(instance.root);
-                }
-            });
-        })();
-    </script>
+				},
+				_instanceProps: {
+					value: true
+				},
+				ready: function () {
+					var template = document.createElement('template');
+					var input = document.createElement('paper-input');
+					var input2 = document.createElement('paper-input');
+					input.setAttribute('value', '{{value}}');
+					input2.setAttribute('value', '{{value}}');
+					Polymer.dom(template.content).appendChild(input);
+					Polymer.dom(template.content).appendChild(input2);
+					this.templatize(template);
+					var instance = this.stamp();
+					Polymer.dom(this.root).appendChild(instance.root);
+				}
+			});
+		})();
+	</script>
 </dom-module>
 
 <dom-module id="darkengines-json">
-    <template>
-       <pre>{{json}}</pre>
-    </template>
+	<template>
+		<pre>{{json}}</pre>
+	</template>
 
-    <script>
-        (function () {
-            'use strict';
-            Polymer({
-                is: 'darkengines-json',
-                properties: {
-                    value: Object,
-                    json: {
-                        type: String,
-                        computed: 'stringify(value, value.*)'
-                    }
-                },
-                stringify: function (value) {
-                    return JSON.stringify(value, null, '\t');
-                }
-            });
-        })();
-    </script>
+	<script>
+		(function () {
+			'use strict';
+			Polymer({
+				is: 'darkengines-json',
+				properties: {
+					value: Object,
+					json: {
+						type: String,
+						computed: 'stringify(value, value.*)'
+					}
+				},
+				stringify: function (value) {
+					return JSON.stringify(value, null, '\t');
+				}
+			});
+		})();
+	</script>
 </dom-module>
 
 <dom-module id="darkengines-json-editor">
-    <template>
-        <paper-textarea multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
-    </template>
+	<template>
+		<paper-textarea multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
+	</template>
 
-    <script>
-        (function () {
-            'use strict';
-            Polymer({
-                is: 'darkengines-json-editor',
-                properties: {
-                    value: {
-                        type: String,
-                        reflect: true,
-                        notify: true,
-                        observer: '_onValueChanged'
-                    },
-                    json: {
-                        type: Object,
-                        readOnly: false,
-                        reflect: true,
-                        notify: true,
-                    },
-                    label: {
-                        type: String
-                    }
-                },
-                _onValueChanged: function (newValue, oldValue) {
-                    this.json = JSON.parse(newValue);
-                }
-            });
-        })();
-    </script>
+	<script>
+		(function () {
+			'use strict';
+			Polymer({
+				is: 'darkengines-json-editor',
+				properties: {
+					value: {
+						type: String,
+						reflect: true,
+						notify: true,
+						observer: '_onValueChanged'
+					},
+					json: {
+						type: Object,
+						readOnly: false,
+						reflect: true,
+						notify: true,
+					},
+					label: {
+						type: String
+					}
+				},
+				_onValueChanged: function (newValue, oldValue) {
+					this.json = JSON.parse(newValue);
+				}
+			});
+		})();
+	</script>
 </dom-module>
