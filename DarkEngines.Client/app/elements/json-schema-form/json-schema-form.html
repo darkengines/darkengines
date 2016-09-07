@@ -19,11 +19,10 @@
 					var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
 					Polymer.dom(template.content).appendChild(element);
 					this.templatize(template);
-					templateInstance = this.stamp({
-						elementFactory: this.elementFactory,
-						schema: this.schema,
-						value: this.value
-					});
+					var templateInstance = this.stamp({});
+					templateInstance.elementFactory = this.elementFactory;
+					templateInstance.schema = this.schema;
+					templateInstance.value = this.value;
 					Polymer.dom(this.root).appendChild(templateInstance.root);
 					onValueChanged.call(this);
 				}
@@ -115,9 +114,8 @@
 
 <dom-module id="json-schema-object">
 	<template>
-		<template is="dom-if" if="{{ !value }}">
-			<paper-button>Add</paper-button>
-		</template>
+		<paper-button id="button" hidden$="{{ value }}">Add</paper-button>
+		<div id="object" hidden$="{{ !value }}"></div>
 	</template>
 	<script>
 		(function () {
@@ -126,7 +124,7 @@
 				onSchemaChanged.call(this);
 			};
 			var onSchemaChanged = function () {
-				var objectElement = document.querySelector('#object');
+				var objectElement = this.$.object;
 				this._map = {};
 				if (this.elementFactory && this.schema) {
 					if (this.schema.properties) {
@@ -139,13 +137,13 @@
 							var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
 							Polymer.dom(template.content).appendChild(element);
 							that.templatize(template);
-							var templateInstance = that.stamp({
-								elementFactory: that.elementFactory,
-								schema: that.schema.properties[key],
-								value: that.value && that.value[key]
-							});
+							var templateInstance = that.stamp({});
+							templateInstance.elementFactory= that.elementFactory;
+							templateInstance.schema = that.schema.properties[key];
+							templateInstance.value= that.value && that.value[key];
+							templateInstance.path= key;
 							that._map[key] = templateInstance;
-							Polymer.dom(that.root).appendChild(templateInstance.root);
+							Polymer.dom(objectElement).appendChild(templateInstance.root);
 						});
 					}
 					onValueChanged.call(this);
@@ -175,11 +173,23 @@
 				_forwardParentPath: function (path, value) {
 
 				},
-				_forwardInstanceProp: function (inst, prop, value) {
+				_prepParentProperties: function(archetype, template) {
 
 				},
+				_forwardInstanceProp: function (inst, prop, value) {
+					if (this.value) {
+						this.set('value.' + inst.path, value);
+						//this.notifyPath(inst.path, value);
+					}
+				},
 				_forwardInstancePath: function (inst, path, value) {
-					this.set(path, value);
+					//this.set('value.'+inst.path+'.'+path, value);
+					path = path.split('.');
+					var firstPart = path.splice(0, 1);
+					if (firstPart == 'value') {
+						var test = 'value.'+inst.path + '.' + path.join('.');
+						this.notifyPath(test, value);
+					}
 				},
 				_instanceProps: {
 					elementFactory: true,
@@ -216,6 +226,12 @@
 				_valueChanged: function (newValue, oldValue) {
 					if (newValue != oldValue) onValueChanged.call(this);
 				},
+				ready: function () {
+					var that = this;
+					this.$.button.addEventListener('click', function () {
+						that.set('value', {});
+					});
+				}
 			});
 		})();
 	</script>
