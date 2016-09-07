@@ -114,8 +114,11 @@
 
 <dom-module id="json-schema-object">
 	<template>
-		<paper-button id="button" hidden$="{{ value }}">Add</paper-button>
-		<div id="object" hidden$="{{ !value }}"></div>
+		<paper-button id="create" raised hidden$="{{ value }}">Add {{ schema.title }}</paper-button>
+		<div class="object" hidden$="{{ !value }}">
+			<paper-button raised id="delete">Delete {{ schema.title }}</paper-button>
+			<div id="object"></div>
+		</div>
 	</template>
 	<script>
 		(function () {
@@ -228,8 +231,11 @@
 				},
 				ready: function () {
 					var that = this;
-					this.$.button.addEventListener('click', function () {
+					this.$.create.addEventListener('click', function () {
 						that.set('value', {});
+					});
+					this.$.delete.addEventListener('click', function () {
+						that.set('value', null);
 					});
 				}
 			});
@@ -316,7 +322,15 @@
 	<template>
 		<paper-textarea multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
 	</template>
-
+	<style>
+		paper-textarea {
+			--paper-input-container-input: {
+				line-height: initial;
+				font-family: monospace;
+				font-size: 12px;
+			}
+		}
+	</style>
 	<script>
 		(function () {
 			'use strict';
@@ -325,9 +339,9 @@
 				properties: {
 					value: {
 						type: String,
+						readOnly: false,
 						reflect: true,
 						notify: true,
-						observer: '_onValueChanged'
 					},
 					json: {
 						type: Object,
@@ -339,8 +353,56 @@
 						type: String
 					}
 				},
-				_onValueChanged: function (newValue, oldValue) {
-					this.json = JSON.parse(newValue);
+				observers: [
+					'_valueChanged(value.*)',
+					'_jsonChanged(json.*)'
+				],
+				_valueChanged: function (changeRecord) {
+					var parsed = JSON.parse(changeRecord.value);
+					var properties = [{
+						parent: null,
+						key: null
+					}];
+					var get = function (property, instance) {
+						if (!property.parent) return instance;
+						var parentValue = get(property.parent, instance);
+						return parentValue && parentValue[property.key];
+					};
+					var set = function (property, instance, value) {
+						if (!property.parent) this.json = value;
+						var parent = get(property.parent, instance);
+						if (parent) parent[property.key] = value;
+					};
+					while (properties.length) {
+						debugger;
+						var property = properties.pop();
+						if (!get.call(this, property, this.json)) {
+							set.call(this, property, this.json, get.call(this, property, parsed));
+						} else {
+							var value = (property.parent && property.parent[property.key]) || parsed;
+							if (value instanceof Array) {
+								value.forEach(function (item, index) {
+									properties.push({
+										parent: property,
+										key: index
+									});
+								});
+							} else if (value instanceof Object) {
+								var keys = Object.keys(value);
+								keys.forEach(function (key, index) {
+									properties.push({
+										parent: property,
+										key: key
+									});
+								});
+							} else {
+								set.call(this, property, this.json, get.call(this, property, parsed));
+							}
+						}
+					}
+				},
+				_jsonChanged: function (changeRecord) {
+					this.value = JSON.stringify(changeRecord.value, null, '\t');
 				}
 			});
 		})();
