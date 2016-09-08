@@ -1,11 +1,11 @@
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 
 <dom-module id="json-schema-form">
 	<script>
 		(function () {
 			'use strict';
-			var templateInstance = null;
 			var onElementFactoryChanged = function () {
 				onSchemaChanged.call(this);
 			};
@@ -19,17 +19,17 @@
 					var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
 					Polymer.dom(template.content).appendChild(element);
 					this.templatize(template);
-					var templateInstance = this.stamp({});
-					templateInstance.elementFactory = this.elementFactory;
-					templateInstance.schema = this.schema;
-					templateInstance.value = this.value;
-					Polymer.dom(this.root).appendChild(templateInstance.root);
-					onValueChanged.call(this);
+					this.templateInstance = this.stamp({});
+					this.templateInstance.elementFactory = this.elementFactory;
+					this.templateInstance.schema = this.schema;
+					this.templateInstance.value = this.value;
+					Polymer.dom(this.root).appendChild(this.templateInstance.root);
+					onValueChanged.call(this, 'value', this.value);
 				}
 			};
-			var onValueChanged = function () {
-				if (templateInstance) {
-					templateInstance.value = this.value;
+			var onValueChanged = function (path, value) {
+				if (this.templateInstance) {
+					this.templateInstance.set(path, value);
 				}
 			};
 			Polymer({
@@ -94,18 +94,20 @@
 						notify: true,
 						readOnly: false,
 						reflect: true,
-						observer: '_valueChanged',
 						value: { firstname: 'Florent', lastname: 'Tollin de Rivarol', address: {} }
 					}
 				},
+				observers: [
+					'_valueChanged(value.*)',
+				],
 				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
 					if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
 				},
 				_schemaChanged: function (newSchema, oldSchema) {
 					if (newSchema != oldSchema) onSchemaChanged.call(this);
 				},
-				_valueChanged: function (newValue, oldValue) {
-					if (newValue != oldValue) onValueChanged.call(this);
+				_valueChanged: function (changeRecord) {
+					onValueChanged.call(this, changeRecord.path, changeRecord.value);
 				},
 			});
 		})();
@@ -115,8 +117,12 @@
 <dom-module id="json-schema-object">
 	<template>
 		<paper-button id="create" raised hidden$="{{ value }}">Add {{ schema.title }}</paper-button>
-		<div class="object" hidden$="{{ !value }}">
-			<paper-button raised id="delete">Delete {{ schema.title }}</paper-button>
+		<div class="object" style="margin-left: 16px" hidden$="{{ !value }}">
+			<div class="title">
+				<h4 style="display: inline-block">{{ schema.title }}</h4>
+				<paper-icon-button icon="delete" id="delete"></paper-icon-button>
+			</div>
+			
 			<div id="object"></div>
 		</div>
 	</template>
@@ -133,32 +139,39 @@
 					if (this.schema.properties) {
 						var keys = Object.keys(this.schema.properties);
 						var that = this;
-
+						
 						keys.forEach(function (key, index) {
 							var template = document.createElement('template');
 							var property = that.schema.properties[key];
 							var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
 							Polymer.dom(template.content).appendChild(element);
 							that.templatize(template);
-							var templateInstance = that.stamp({});
-							templateInstance.elementFactory= that.elementFactory;
+							var templateInstance = that.stamp();
+							templateInstance.elementFactory = that.elementFactory;
 							templateInstance.schema = that.schema.properties[key];
-							templateInstance.value= that.value && that.value[key];
-							templateInstance.path= key;
+							templateInstance.value = that.value && that.value[key];
+							templateInstance.path = key;
 							that._map[key] = templateInstance;
 							Polymer.dom(objectElement).appendChild(templateInstance.root);
 						});
 					}
-					onValueChanged.call(this);
+					onValueChanged.call(this, 'value', this.value);
 				}
 			};
-			var onValueChanged = function () {
-				if (this.value && this.value instanceof Object) {
-					var keys = Object.keys(this.schema.properties);
-					var that = this;
-					keys.forEach(function (key) {
-						if (that._map[key]) that._map[key].value = that.value[key];
-					});
+			var onValueChanged = function (path, value) {
+				if (path == 'value') {
+					if (this.value && this.value instanceof Object) {
+						var keys = Object.keys(this.schema.properties);
+						var that = this;
+						keys.forEach(function (key) {
+							if (that._map[key]) that._map[key].value = that.value[key];
+						});
+					}
+				} else {
+					var parts = path.split('.');
+					var front = parts.splice(0, 2);
+					path = parts.join('.');
+					if (this._map && this._map[front[1]]) this._map[front[1]].set(path ? ('value.' + path) : 'value', value);
 				}
 			};
 			Polymer({
@@ -167,6 +180,9 @@
 					var result = !(value instanceof Object && value);
 					return result;
 				},
+				observers: [
+					'_valueChanged(value.*)'
+				],
 				behaviors: [
 					Polymer.Templatizer
 				],
@@ -176,21 +192,19 @@
 				_forwardParentPath: function (path, value) {
 
 				},
-				_prepParentProperties: function(archetype, template) {
+				_prepParentProperties: function (archetype, template) {
 
 				},
 				_forwardInstanceProp: function (inst, prop, value) {
 					if (this.value) {
 						this.set('value.' + inst.path, value);
-						//this.notifyPath(inst.path, value);
 					}
 				},
 				_forwardInstancePath: function (inst, path, value) {
-					//this.set('value.'+inst.path+'.'+path, value);
 					path = path.split('.');
 					var firstPart = path.splice(0, 1);
 					if (firstPart == 'value') {
-						var test = 'value.'+inst.path + '.' + path.join('.');
+						var test = 'value.' + inst.path + '.' + path.join('.');
 						this.notifyPath(test, value);
 					}
 				},
@@ -216,7 +230,6 @@
 						notify: true,
 						readOnly: false,
 						reflect: true,
-						observer: '_valueChanged',
 						value: null,
 					}
 				},
@@ -226,8 +239,8 @@
 				_schemaChanged: function (newSchema, oldSchema) {
 					if (newSchema != oldSchema) onSchemaChanged.call(this);
 				},
-				_valueChanged: function (newValue, oldValue) {
-					if (newValue != oldValue) onValueChanged.call(this);
+				_valueChanged: function (changeRecord) {
+					onValueChanged.call(this, changeRecord.path, changeRecord.value);
 				},
 				ready: function () {
 					var that = this;
@@ -320,7 +333,7 @@
 
 <dom-module id="darkengines-json-editor">
 	<template>
-		<paper-textarea multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
+		<paper-textarea id="value" multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
 	</template>
 	<style>
 		paper-textarea {
@@ -357,6 +370,22 @@
 					'_valueChanged(value.*)',
 					'_jsonChanged(json.*)'
 				],
+				ready: function () {
+					this.$.value.addEventListener('keydown', function (e) {
+						if (e.keyCode == 9) {
+							var input = this.$.input;
+							var startIndex = input.selectionStart;
+							var endIndex = input.selectionEnd;
+							input.value = input.value.slice(0, startIndex) + '\t' + input.value.slice(endIndex);
+							input.selectionStart = startIndex + 1;
+							input.selectionEnd = startIndex + 1;
+							e.preventDefault();
+						}
+					});
+					this.$.value.addEventListener('keyup', function (e) {
+
+					});
+				},
 				_valueChanged: function (changeRecord) {
 					var parsed = JSON.parse(changeRecord.value);
 					var properties = [{
@@ -369,17 +398,28 @@
 						return parentValue && parentValue[property.key];
 					};
 					var set = function (property, instance, value) {
-						if (!property.parent) this.json = value;
-						var parent = get(property.parent, instance);
-						if (parent) parent[property.key] = value;
+						if (!property.parent) {
+							this.set('json', value);
+							this.notifyPath('json', value);
+						} else {
+							var ref = property;
+							var path = null;
+							while (ref.parent) {
+								path = path ? (ref.key + '.' + path) : ref.key;
+								ref = ref.parent;
+							}
+							path = 'json.' + path;
+							var parent = get(property.parent, instance);
+							if (parent) this.set(path, value);
+							//this.notifyPath(path, value);
+						}
 					};
 					while (properties.length) {
-						debugger;
-						var property = properties.pop();
+						var property = properties.splice(0, 1)[0];
 						if (!get.call(this, property, this.json)) {
 							set.call(this, property, this.json, get.call(this, property, parsed));
 						} else {
-							var value = (property.parent && property.parent[property.key]) || parsed;
+							var value = get(property, parsed);
 							if (value instanceof Array) {
 								value.forEach(function (item, index) {
 									properties.push({
@@ -396,13 +436,15 @@
 									});
 								});
 							} else {
-								set.call(this, property, this.json, get.call(this, property, parsed));
+								var a = get.call(this, property, parsed);
+								var b = get.call(this, property, this.json);
+								if (a != b) set.call(this, property, this.json, get.call(this, property, parsed));
 							}
 						}
 					}
 				},
 				_jsonChanged: function (changeRecord) {
-					this.value = JSON.stringify(changeRecord.value, null, '\t');
+					this.value = JSON.stringify(this.json, null, '\t');
 				}
 			});
 		})();
