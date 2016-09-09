@@ -1,0 +1,108 @@
+<link rel="import" href="../darkengines-json-schema-object/darkengines-json-schema-object.html">
+
+<dom-module id="darkengines-json-schema-form">
+	<script>
+		(function () {
+			'use strict';
+			var onElementFactoryChanged = function () {
+				onSchemaChanged.call(this);
+			};
+			var onSchemaChanged = function () {
+				if (this.elementFactory && this.schema) {
+					var root = Polymer.dom(this.root);
+					while (root.firstChild) {
+						root.removeChild(root.firstChild);
+					}
+					var template = document.createElement('template');
+					var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
+					Polymer.dom(template.content).appendChild(element);
+					this.templatize(template);
+					this.templateInstance = this.stamp({});
+					this.templateInstance.elementFactory = this.elementFactory;
+					this.templateInstance.schema = this.schema;
+					this.templateInstance.value = this.value;
+					Polymer.dom(this.root).appendChild(this.templateInstance.root);
+					onValueChanged.call(this, 'value', this.value);
+				}
+			};
+			var onValueChanged = function (path, value) {
+				if (this.templateInstance) {
+					this.templateInstance.set(path, value);
+				}
+			};
+			Polymer({
+				is: 'darkengines-json-schema-form',
+				behaviors: [
+					Polymer.Templatizer
+				],
+				_forwardParentProp: function (prop, value) {
+
+				},
+				_forwardParentPath: function (path, value) {
+
+				},
+				_forwardInstanceProp: function (inst, prop, value) {
+
+				},
+				_forwardInstancePath: function (inst, path, value) {
+					this.set(path, value);
+				},
+				_instanceProps: {
+					elementFactory: true,
+					schema: true,
+					value: true
+				},
+				properties: {
+					elementFactory: {
+						type: Object,
+						value: {
+							object: function (elementFactoryPath, schemaPath, valuePath) {
+								var element = document.createElement('darkengines-json-schema-object');
+								Polymer.dom(element).setAttribute('element-factory', '{{' + elementFactoryPath + '}}');
+								Polymer.dom(element).setAttribute('schema', '{{' + schemaPath + '}}');
+								Polymer.dom(element).setAttribute('value', '{{' + valuePath + '}}');
+								return element;
+							},
+							array: function (schema, value, elementFactory) {
+
+							},
+							string: function (elementFactoryPath, schemaPath, valuePath) {
+								var element = document.createElement('paper-input');
+								Polymer.dom(element).setAttribute('label', '{{' + schemaPath + '.title}}');
+								Polymer.dom(element).setAttribute('value', '{{' + valuePath + '}}');
+								return element;
+							},
+						},
+						notify: false,
+						readOnly: false,
+						observer: '_elementFactoryChanged'
+					}, schema: {
+						type: Object,
+						value: null,
+						notify: false,
+						readOnly: false,
+						observer: '_schemaChanged'
+					}, value: {
+						type: Object,
+						notify: true,
+						readOnly: false,
+						reflect: true,
+						value: { firstname: 'Florent', lastname: 'Tollin de Rivarol', address: {} }
+					}
+				},
+				observers: [
+					'_valueChanged(value.*)',
+				],
+				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
+					if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
+				},
+				_schemaChanged: function (newSchema, oldSchema) {
+					if (newSchema != oldSchema) onSchemaChanged.call(this);
+				},
+				_valueChanged: function (changeRecord) {
+					onValueChanged.call(this, changeRecord.path, changeRecord.value);
+				},
+			});
+		})();
+	</script>
+</dom-module>

@@ -1,0 +1,145 @@
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+
+<dom-module id="darkengines-json-schema-object">
+	<template>
+		<paper-button id="create" raised hidden$="{{ value }}">Add {{ schema.title }}</paper-button>
+		<div class="object" style="margin-left: 16px" hidden$="{{ !value }}">
+			<div class="title">
+				<h4 style="display: inline-block">{{ schema.title }}</h4>
+				<paper-icon-button icon="delete" id="delete"></paper-icon-button>
+			</div>
+			
+			<div id="object"></div>
+		</div>
+	</template>
+	<script>
+		(function () {
+			'use strict';
+			var onElementFactoryChanged = function () {
+				onSchemaChanged.call(this);
+			};
+			var onSchemaChanged = function () {
+				var objectElement = this.$.object;
+				this._map = {};
+				if (this.elementFactory && this.schema) {
+					if (this.schema.properties) {
+						var keys = Object.keys(this.schema.properties);
+						var that = this;
+						
+						keys.forEach(function (key, index) {
+							var template = document.createElement('template');
+							var property = that.schema.properties[key];
+							var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
+							Polymer.dom(template.content).appendChild(element);
+							that.templatize(template);
+							var templateInstance = that.stamp();
+							templateInstance.elementFactory = that.elementFactory;
+							templateInstance.schema = that.schema.properties[key];
+							templateInstance.value = that.value && that.value[key];
+							templateInstance.path = key;
+							that._map[key] = templateInstance;
+							Polymer.dom(objectElement).appendChild(templateInstance.root);
+						});
+					}
+					onValueChanged.call(this, 'value', this.value);
+				}
+			};
+			var onValueChanged = function (path, value) {
+				if (path == 'value') {
+					if (this.value && this.value instanceof Object) {
+						var keys = Object.keys(this.schema.properties);
+						var that = this;
+						keys.forEach(function (key) {
+							if (that._map[key]) that._map[key].value = that.value[key];
+						});
+					}
+				} else {
+					var parts = path.split('.');
+					var front = parts.splice(0, 2);
+					path = parts.join('.');
+					if (this._map && this._map[front[1]]) this._map[front[1]].set(path ? ('value.' + path) : 'value', value);
+				}
+			};
+			Polymer({
+				is: 'darkengines-json-schema-object',
+				_hasNoValue: function (value) {
+					var result = !(value instanceof Object && value);
+					return result;
+				},
+				observers: [
+					'_valueChanged(value.*)'
+				],
+				behaviors: [
+					Polymer.Templatizer
+				],
+				_forwardParentProp: function (prop, value) {
+
+				},
+				_forwardParentPath: function (path, value) {
+
+				},
+				_prepParentProperties: function (archetype, template) {
+
+				},
+				_forwardInstanceProp: function (inst, prop, value) {
+					if (this.value) {
+						this.set('value.' + inst.path, value);
+					}
+				},
+				_forwardInstancePath: function (inst, path, value) {
+					path = path.split('.');
+					var firstPart = path.splice(0, 1);
+					if (firstPart == 'value') {
+						var test = 'value.' + inst.path + '.' + path.join('.');
+						this.notifyPath(test, value);
+					}
+				},
+				_instanceProps: {
+					elementFactory: true,
+					schema: true,
+					value: true
+				},
+				properties: {
+					elementFactory: {
+						type: Object,
+						notify: false,
+						readOnly: false,
+						observer: '_elementFactoryChanged'
+					}, schema: {
+						type: Object,
+						value: null,
+						notify: false,
+						readOnly: false,
+						observer: '_schemaChanged'
+					}, value: {
+						type: Object,
+						notify: true,
+						readOnly: false,
+						reflect: true,
+						value: null,
+					}
+				},
+				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
+					if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
+				},
+				_schemaChanged: function (newSchema, oldSchema) {
+					if (newSchema != oldSchema) onSchemaChanged.call(this);
+				},
+				_valueChanged: function (changeRecord) {
+					onValueChanged.call(this, changeRecord.path, changeRecord.value);
+				},
+				ready: function () {
+					var that = this;
+					this.$.create.addEventListener('click', function () {
+						that.set('value', {});
+					});
+					this.$.delete.addEventListener('click', function () {
+						that.set('value', null);
+					});
+				}
+			});
+		})();
+	</script>
+</dom-module>
