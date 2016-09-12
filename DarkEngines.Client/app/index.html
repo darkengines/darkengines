@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <!--
 @license
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
@@ -88,7 +88,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         <iron-icon icon="mail"></iron-icon>
                         <span>Contact</span>
                     </a>
-
+					<a data-route="json" href="{{baseUrl}}json">
+						<iron-icon icon="mail"></iron-icon>
+						<span>JSON</span>
+					</a>
                     <a data-route="test" href="{{baseUrl}}test">
                         <iron-icon icon="mail"></iron-icon>
                         <span>Test</span>
@@ -186,6 +189,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                                 <p>This is the contact section</p>
                             </paper-material>
                         </section>
+
+						<section data-route="json" tabindex="-1">
+							<paper-material elevation="1">
+								<darkengines-json-editor label="z" value='{
+														"a": [0,1,2,3],
+														"b": {
+															"x":1,
+															"y": 2
+														}
+								}' json="{{z}}"></darkengines-json-editor>
+								<darkengines-json-editor label="z" json="{{z}}"></darkengines-json-editor>
+							</paper-material>
+						</section>
 
                         <section data-route="test" tabindex="-1">
                             <paper-material elevation="1">
