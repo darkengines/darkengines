@@ -58,6 +58,66 @@
 					});
 				},
 				_valueChanged: function (changeRecord) {
+				    var getType = (x instanceof Array) * 1 || (x instanceof Object) * 2 || 3;
+				    var morph = function (subject, model) {
+				        var subjectType = getType(subject);
+				        var modelType = getType(model);
+				        if (modelType != subjectType) {
+				            subject = model;
+				        } else {
+				            switch (subject) {
+				                case (1): {
+				                    if (model != subject) {
+				                        if (model.length > subject.length) {
+				                            var extraElements = model.slice(subject.length, model.length);
+				                            Array.prototype.splice.apply(subject, [subject.length - 1, 0].concat(extraElements));
+				                        } else {
+				                            subject.splice(model.length, subject.length - model.length);
+				                        }
+				                        subject.forEach(function (item, index) {
+				                            morph(item, model[index]);
+				                        });
+				                    }
+				                    break;
+				                }
+				                case (2): {
+				                    if (model != subject) {
+				                        var modelKeys = Object.keys(model);
+				                        var subjectKeys = Object.keys(subject);
+				                        var keysToAdd = modelKeys.filter(function (modelKey) {
+				                            return !subjectKeys.some(function (subjectKey) {
+				                                return subjectKey == modelKey;
+				                            });
+				                        });
+				                        var keysToRemove = subjectKeys.filter(function (subjectKey) {
+				                            return !modelKeys.some(function (modelKey) {
+				                                return subjectKey == modelKey;
+				                            });
+				                        });
+				                        var keysToUpdate = subjectKeys.filter(function (subjectKey) {
+				                            return !keysToRemove.some(function (keyToRemove) {
+				                                return subjectKey == keyToRemove;
+				                            });
+				                        });
+				                        keysToAdd.forEach(function (keyToAdd) {
+				                            subject[keysToAdd] = model[keysToAdd];
+				                        });
+				                        keysToRemove.forEach(function (keyToRemove) {
+				                            delete subject[keyToRemove];
+				                        });
+				                        keysToUpdate.forEach(function (keyToUpdate) {
+				                            morph(subject[keysToUpdate], model[keysToUpdate]);
+				                        });
+				                    }
+				                    break;
+				                }
+				                case (3): {
+				                    if (subject != model) subject = model;
+				                }
+				            }
+				        }
+				    };
+
 					var parsed = JSON.parse(changeRecord.value);
 					var properties = [{
 						parent: null,
