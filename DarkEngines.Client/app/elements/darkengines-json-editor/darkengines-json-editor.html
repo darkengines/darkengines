@@ -59,31 +59,32 @@
 				},
 				_valueChanged: function (changeRecord) {
 					var getType = function (x) { return (x instanceof Array) * 1 || (x instanceof Object) * 2 || 3 };
-					var morph = function (subject, model) {
-						var subjectType = getType(subject);
+					var morph = function (subjectReference, model) {
+						var subjectValue = subjectReference.context.get(subjectReference.path);
+						var subjectType = getType(subjectValue);
 						var modelType = getType(model);
 						if (modelType != subjectType) {
-							subject = model;
+							subjectReference.context.set(subjectReference.path, model);
 						} else {
-							switch (subject) {
+							switch (subjectType) {
 								case (1): {
-									if (model != subject) {
-										if (model.length > subject.length) {
-											var extraElements = model.slice(subject.length, model.length);
-											Array.prototype.splice.apply(subject, [subject.length - 1, 0].concat(extraElements));
+									if (model != subjectValue) {
+										if (model.length > subjectValue.length) {
+											var extraElements = model.slice(subjectValue.length, model.length);
+											Polymer.Base.splice.apply(subjectReference.context, [subjectReference.path, subjectValue.length - 1, 0].concat(extraElements));
 										} else {
-											subject.splice(model.length, subject.length - model.length);
+											subjectReference.context.splice(subjectReference.path, model.length, subjectValue.length - model.length);
 										}
-										subject.forEach(function (item, index) {
-											morph(item, model[index]);
+										subjectValue.forEach(function (item, index) {
+											morph({ context: subjectReference.context, path: subjectReference.path + '.' + index }, model[index]);
 										});
 									}
 									break;
 								}
 								case (2): {
-									if (model != subject) {
+									if (model != subjectValue) {
 										var modelKeys = Object.keys(model);
-										var subjectKeys = Object.keys(subject);
+										var subjectKeys = Object.keys(subjectValue);
 										var keysToAdd = modelKeys.filter(function (modelKey) {
 											return !subjectKeys.some(function (subjectKey) {
 												return subjectKey == modelKey;
@@ -100,79 +101,81 @@
 											});
 										});
 										keysToAdd.forEach(function (keyToAdd) {
-											subject[keysToAdd] = model[keysToAdd];
+											subjectReference.context.set(subjectReference.path + '.' + keysToAdd, model[keyToAdd]);
 										});
 										keysToRemove.forEach(function (keyToRemove) {
-											delete subject[keyToRemove];
+											subjectReference.context.set(subjectReference.path + '.' + keyToRemove, undefined);
+											delete subjectValue[keyToRemove];
 										});
 										keysToUpdate.forEach(function (keyToUpdate) {
-											morph(subject[keysToUpdate], model[keysToUpdate]);
+											morph({ context: subjectReference.context, path: subjectReference.path + '.' + keyToUpdate }, model[keyToUpdate]);
 										});
 									}
 									break;
 								}
 								case (3): {
-									if (subject != model) subject = model;
+									if (subjectValue != model) subjectReference.context.set(subjectReference.path, model);
 								}
 							}
 						}
 					};
 
 					var parsed = JSON.parse(changeRecord.value);
-					var properties = [{
-						parent: null,
-						key: null
-					}];
-					var get = function (property, instance) {
-						if (!property.parent) return instance;
-						var parentValue = get(property.parent, instance);
-						return parentValue && parentValue[property.key];
-					};
-					var set = function (property, instance, value) {
-						if (!property.parent) {
-							this.set('json', value);
-							this.notifyPath('json', value);
-						} else {
-							var ref = property;
-							var path = null;
-							while (ref.parent) {
-								path = path ? (ref.key + '.' + path) : ref.key;
-								ref = ref.parent;
-							}
-							path = 'json.' + path;
-							var parent = get(property.parent, instance);
-							if (parent) this.set(path, value);
-							//this.notifyPath(path, value);
-						}
-					};
-					while (properties.length) {
-						var property = properties.splice(0, 1)[0];
-						if (!get.call(this, property, this.json)) {
-							set.call(this, property, this.json, get.call(this, property, parsed));
-						} else {
-							var value = get(property, parsed);
-							if (value instanceof Array) {
-								value.forEach(function (item, index) {
-									properties.push({
-										parent: property,
-										key: index
-									});
-								});
-							} else if (value instanceof Object) {
-								var keys = Object.keys(value);
-								keys.forEach(function (key, index) {
-									properties.push({
-										parent: property,
-										key: key
-									});
-								});
-							} else {
-								var a = get.call(this, property, parsed);
-								var b = get.call(this, property, this.json);
-								if (a != b) set.call(this, property, this.json, get.call(this, property, parsed));
-							}
-						}
-					}
+					morph({ context: this, path: 'json' }, parsed);
+					//var properties = [{
+					//	parent: null,
+					//	key: null
+					//}];
+					//var get = function (property, instance) {
+					//	if (!property.parent) return instance;
+					//	var parentValue = get(property.parent, instance);
+					//	return parentValue && parentValue[property.key];
+					//};
+					//var set = function (property, instance, value) {
+					//	if (!property.parent) {
+					//		this.set('json', value);
+					//		this.notifyPath('json', value);
+					//	} else {
+					//		var ref = property;
+					//		var path = null;
+					//		while (ref.parent) {
+					//			path = path ? (ref.key + '.' + path) : ref.key;
+					//			ref = ref.parent;
+					//		}
+					//		path = 'json.' + path;
+					//		var parent = get(property.parent, instance);
+					//		if (parent) this.set(path, value);
+					//		//this.notifyPath(path, value);
+					//	}
+					//};
+					//while (properties.length) {
+					//	var property = properties.splice(0, 1)[0];
+					//	if (!get.call(this, property, this.json)) {
+					//		set.call(this, property, this.json, get.call(this, property, parsed));
+					//	} else {
+					//		var value = get(property, parsed);
+					//		if (value instanceof Array) {
+					//			value.forEach(function (item, index) {
+					//				properties.push({
+					//					parent: property,
+					//					key: index
+					//				});
+					//			});
+					//		} else if (value instanceof Object) {
+					//			var keys = Object.keys(value);
+					//			keys.forEach(function (key, index) {
+					//				properties.push({
+					//					parent: property,
+					//					key: key
+					//				});
+					//			});
+					//		} else {
+					//			var a = get.call(this, property, parsed);
+					//			var b = get.call(this, property, this.json);
+					//			if (a != b) set.call(this, property, this.json, get.call(this, property, parsed));
+					//		}
+					//	}
+					//}
 				},
 				_jsonChanged: function (changeRecord) {
 					this.value = JSON.stringify(this.json, null, '\t');

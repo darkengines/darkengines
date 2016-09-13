@@ -7,7 +7,7 @@
 			var onElementFactoryChanged = function () {
 				onSchemaChanged.call(this);
 			};
-			var onSchemaChanged = function () {
+			var onSchemaChanged = function (path, value) {
 				if (this.elementFactory && this.schema) {
 					var root = Polymer.dom(this.root);
 					while (root.firstChild) {
@@ -81,7 +81,6 @@
 						value: null,
 						notify: false,
 						readOnly: false,
-						observer: '_schemaChanged'
 					}, value: {
 						type: Object,
 						notify: true,
@@ -92,12 +91,13 @@
 				},
 				observers: [
 					'_valueChanged(value.*)',
+					'_schemaChanged(schema.*)',
 				],
 				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
 					if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
 				},
-				_schemaChanged: function (newSchema, oldSchema) {
-					if (newSchema != oldSchema) onSchemaChanged.call(this);
+				_schemaChanged: function (changeRecord) {
+					onSchemaChanged.call(this, changeRecord.path, changeRecord.value);
 				},
 				_valueChanged: function (changeRecord) {
 					onValueChanged.call(this, changeRecord.path, changeRecord.value);
