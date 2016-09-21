@@ -1,0 +1,3 @@
+[submodule "DarkEngines.Client/app/bower_components/polymer"]
+	path = DarkEngines.Client/app/bower_components/polymer
+	url = https://github.com/darkengines/polymer.git

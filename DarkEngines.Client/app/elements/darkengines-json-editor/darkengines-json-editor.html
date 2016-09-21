@@ -104,8 +104,9 @@
 											subjectReference.context.set(subjectReference.path + '.' + keysToAdd, model[keyToAdd]);
 										});
 										keysToRemove.forEach(function (keyToRemove) {
-											subjectReference.context.set(subjectReference.path + '.' + keyToRemove, undefined);
-											delete subjectValue[keyToRemove];
+											//subjectReference.context.set(subjectReference.path + '.' + keyToRemove, undefined);
+										    //delete subjectValue[keyToRemove];
+										    subjectReference.context.delete(subjectReference.path + '.' + keyToRemove);
 										});
 										keysToUpdate.forEach(function (keyToUpdate) {
 											morph({ context: subjectReference.context, path: subjectReference.path + '.' + keyToUpdate }, model[keyToUpdate]);
