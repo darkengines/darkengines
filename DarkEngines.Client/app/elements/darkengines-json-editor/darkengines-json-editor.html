@@ -3,185 +3,127 @@
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 
 <dom-module id="darkengines-json-editor">
-	<template>
-		<paper-textarea id="value" multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
-	</template>
-	<style>
-		paper-textarea {
-			--paper-input-container-input: {
-				line-height: initial;
-				font-family: monospace;
-				font-size: 12px;
-			}
-		}
-	</style>
-	<script>
-		(function () {
-			'use strict';
-			Polymer({
-				is: 'darkengines-json-editor',
-				properties: {
-					value: {
-						type: String,
-						readOnly: false,
-						reflect: true,
-						notify: true,
-					},
-					json: {
-						type: Object,
-						readOnly: false,
-						reflect: true,
-						notify: true,
-					},
-					label: {
-						type: String
-					}
-				},
-				observers: [
+    <template>
+        <paper-textarea id="value" multiple="true" label="[[label]]" value="{{value}}"></paper-textarea>
+    </template>
+    <style>
+        paper-textarea {
+            --paper-input-container-input: {
+                line-height: initial;
+                font-family: monospace;
+                font-size: 12px;
+            }
+        }
+    </style>
+    <script>
+        (function () {
+            'use strict';
+            Polymer({
+                is: 'darkengines-json-editor',
+                properties: {
+                    value: {
+                        type: String,
+                        readOnly: false,
+                        reflect: true,
+                        notify: true,
+                    },
+                    json: {
+                        type: Object,
+                        readOnly: false,
+                        reflect: true,
+                        notify: true,
+                    },
+                    label: {
+                        type: String
+                    }
+                },
+                observers: [
 					'_valueChanged(value.*)',
 					'_jsonChanged(json.*)'
-				],
-				ready: function () {
-					this.$.value.addEventListener('keydown', function (e) {
-						if (e.keyCode == 9) {
-							var input = this.$.input;
-							var startIndex = input.selectionStart;
-							var endIndex = input.selectionEnd;
-							input.value = input.value.slice(0, startIndex) + '\t' + input.value.slice(endIndex);
-							input.selectionStart = startIndex + 1;
-							input.selectionEnd = startIndex + 1;
-							e.preventDefault();
-						}
-					});
-					this.$.value.addEventListener('keyup', function (e) {
+                ],
+                ready: function () {
+                    this.$.value.addEventListener('keydown', function (e) {
+                        if (e.keyCode == 9) {
+                            var input = this.$.input;
+                            var startIndex = input.selectionStart;
+                            var endIndex = input.selectionEnd;
+                            input.value = input.value.slice(0, startIndex) + '\t' + input.value.slice(endIndex);
+                            input.selectionStart = startIndex + 1;
+                            input.selectionEnd = startIndex + 1;
+                            e.preventDefault();
+                        }
+                    });
+                    this.$.value.addEventListener('keyup', function (e) {
 
-					});
-				},
-				_valueChanged: function (changeRecord) {
-					var getType = function (x) { return (x instanceof Array) * 1 || (x instanceof Object) * 2 || 3 };
-					var morph = function (subjectReference, model) {
-						var subjectValue = subjectReference.context.get(subjectReference.path);
-						var subjectType = getType(subjectValue);
-						var modelType = getType(model);
-						if (modelType != subjectType) {
-							subjectReference.context.set(subjectReference.path, model);
-						} else {
-							switch (subjectType) {
-								case (1): {
-									if (model != subjectValue) {
-										if (model.length > subjectValue.length) {
-											var extraElements = model.slice(subjectValue.length, model.length);
-											Polymer.Base.splice.apply(subjectReference.context, [subjectReference.path, subjectValue.length - 1, 0].concat(extraElements));
-										} else {
-											subjectReference.context.splice(subjectReference.path, model.length, subjectValue.length - model.length);
-										}
-										subjectValue.forEach(function (item, index) {
-											morph({ context: subjectReference.context, path: subjectReference.path + '.' + index }, model[index]);
-										});
-									}
-									break;
-								}
-								case (2): {
-									if (model != subjectValue) {
-										var modelKeys = Object.keys(model);
-										var subjectKeys = Object.keys(subjectValue);
-										var keysToAdd = modelKeys.filter(function (modelKey) {
-											return !subjectKeys.some(function (subjectKey) {
-												return subjectKey == modelKey;
-											});
-										});
-										var keysToRemove = subjectKeys.filter(function (subjectKey) {
-											return !modelKeys.some(function (modelKey) {
-												return subjectKey == modelKey;
-											});
-										});
-										var keysToUpdate = subjectKeys.filter(function (subjectKey) {
-											return !keysToRemove.some(function (keyToRemove) {
-												return subjectKey == keyToRemove;
-											});
-										});
-										keysToAdd.forEach(function (keyToAdd) {
-											subjectReference.context.set(subjectReference.path + '.' + keysToAdd, model[keyToAdd]);
-										});
-										keysToRemove.forEach(function (keyToRemove) {
-											//subjectReference.context.set(subjectReference.path + '.' + keyToRemove, undefined);
-										    //delete subjectValue[keyToRemove];
-										    subjectReference.context.delete(subjectReference.path + '.' + keyToRemove);
-										});
-										keysToUpdate.forEach(function (keyToUpdate) {
-											morph({ context: subjectReference.context, path: subjectReference.path + '.' + keyToUpdate }, model[keyToUpdate]);
-										});
-									}
-									break;
-								}
-								case (3): {
-									if (subjectValue != model) subjectReference.context.set(subjectReference.path, model);
-								}
-							}
-						}
-					};
+                    });
+                },
+                _valueChanged: function (changeRecord) {
+                    var getType = function (x) { return (x instanceof Array) * 1 || (x instanceof Object) * 2 || 3 };
+                    var morph = function (subjectReference, model) {
+                        var subjectValue = subjectReference.context.get(subjectReference.path);
+                        var subjectType = getType(subjectValue);
+                        var modelType = getType(model);
+                        switch (modelType) {
+                            case (1): {
+                                if (model != subjectValue) {
+                                    if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = []);
+                                    if (model.length > subjectValue.length) {
+                                        var extraElements = model.slice(subjectValue.length, model.length);
+                                        Polymer.Base.splice.apply(subjectReference.context, [subjectReference.path, subjectValue.length - 1, 0].concat(extraElements));
+                                    } else {
+                                        subjectReference.context.splice(subjectReference.path, model.length, subjectValue.length - model.length);
+                                    }
+                                    subjectValue.forEach(function (item, index) {
+                                        morph({ context: subjectReference.context, path: subjectReference.path + '.' + index }, model[index]);
+                                    });
+                                }
+                                break;
+                            }
+                            case (2): {
+                                if (model != subjectValue) {
+                                    if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = {});
+                                    var modelKeys = Object.keys(model);
+                                    var subjectKeys = Object.keys(subjectValue);
+                                    var keysToAdd = modelKeys.filter(function (modelKey) {
+                                        return !subjectKeys.some(function (subjectKey) {
+                                            return subjectKey == modelKey;
+                                        });
+                                    });
+                                    var keysToRemove = subjectKeys.filter(function (subjectKey) {
+                                        return !modelKeys.some(function (modelKey) {
+                                            return subjectKey == modelKey;
+                                        });
+                                    });
+                                    var keysToUpdate = subjectKeys.filter(function (subjectKey) {
+                                        return !keysToRemove.some(function (keyToRemove) {
+                                            return subjectKey == keyToRemove;
+                                        });
+                                    });
+                                    keysToAdd.forEach(function (keyToAdd) {
+                                        subjectReference.context.set(subjectReference.path + '.' + keyToAdd, model[keyToAdd]);
+                                    });
+                                    keysToRemove.forEach(function (keyToRemove) {
+                                        subjectReference.context.set(subjectReference.path + '.' + keyToRemove, undefined);
+                                    });
+                                    keysToUpdate.forEach(function (keyToUpdate) {
+                                        morph({ context: subjectReference.context, path: subjectReference.path + '.' + keyToUpdate }, model[keyToUpdate]);
+                                    });
+                                }
+                                break;
+                            }
+                            case (3): {
+                                if (subjectValue != model) subjectReference.context.set(subjectReference.path, model);
+                            }
+                        }
+                    };
 
-					var parsed = JSON.parse(changeRecord.value);
-					morph({ context: this, path: 'json' }, parsed);
-					//var properties = [{
-					//	parent: null,
-					//	key: null
-					//}];
-					//var get = function (property, instance) {
-					//	if (!property.parent) return instance;
-					//	var parentValue = get(property.parent, instance);
-					//	return parentValue && parentValue[property.key];
-					//};
-					//var set = function (property, instance, value) {
-					//	if (!property.parent) {
-					//		this.set('json', value);
-					//		this.notifyPath('json', value);
-					//	} else {
-					//		var ref = property;
-					//		var path = null;
-					//		while (ref.parent) {
-					//			path = path ? (ref.key + '.' + path) : ref.key;
-					//			ref = ref.parent;
-					//		}
-					//		path = 'json.' + path;
-					//		var parent = get(property.parent, instance);
-					//		if (parent) this.set(path, value);
-					//		//this.notifyPath(path, value);
-					//	}
-					//};
-					//while (properties.length) {
-					//	var property = properties.splice(0, 1)[0];
-					//	if (!get.call(this, property, this.json)) {
-					//		set.call(this, property, this.json, get.call(this, property, parsed));
-					//	} else {
-					//		var value = get(property, parsed);
-					//		if (value instanceof Array) {
-					//			value.forEach(function (item, index) {
-					//				properties.push({
-					//					parent: property,
-					//					key: index
-					//				});
-					//			});
-					//		} else if (value instanceof Object) {
-					//			var keys = Object.keys(value);
-					//			keys.forEach(function (key, index) {
-					//				properties.push({
-					//					parent: property,
-					//					key: key
-					//				});
-					//			});
-					//		} else {
-					//			var a = get.call(this, property, parsed);
-					//			var b = get.call(this, property, this.json);
-					//			if (a != b) set.call(this, property, this.json, get.call(this, property, parsed));
-					//		}
-					//	}
-					//}
-				},
-				_jsonChanged: function (changeRecord) {
-					this.value = JSON.stringify(this.json, null, '\t');
-				}
-			});
-		})();
-	</script>
+                    var parsed = JSON.parse(changeRecord.value);
+                    morph({ context: this, path: 'json' }, parsed);
+                },
+                _jsonChanged: function (changeRecord) {
+                    this.value = JSON.stringify(this.json, null, '\t');
+                }
+            });
+        })();
+    </script>
 </dom-module>
