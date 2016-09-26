@@ -31,16 +31,18 @@
 						keys.forEach(function (key, index) {
 							var template = document.createElement('template');
 							var property = that.schema.properties[key];
-							var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
-							Polymer.dom(template.content).appendChild(element);
-							that.templatize(template);
-							var templateInstance = that.stamp();
-							templateInstance.elementFactory = that.elementFactory;
-							templateInstance.schema = that.schema.properties[key];
-							templateInstance.value = that.value && that.value[key];
-							templateInstance.path = key;
-							that._map[key] = templateInstance;
-							Polymer.dom(objectElement).appendChild(templateInstance.root);
+							if (property.type) {
+								var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
+								Polymer.dom(template.content).appendChild(element);
+								that.templatize(template);
+								var templateInstance = that.stamp();
+								templateInstance.elementFactory = that.elementFactory;
+								templateInstance.schema = that.schema.properties[key];
+								templateInstance.value = that.value && that.value[key];
+								templateInstance.path = key;
+								that._map[key] = templateInstance;
+								Polymer.dom(objectElement).appendChild(templateInstance.root);
+							}
 						});
 					}
 					onValueChanged.call(this, 'value', this.value);

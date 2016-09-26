@@ -138,64 +138,95 @@
 				},
 				_valueChanged: function (changeRecord) {
 					var getType = function (x) { return (x instanceof Array) * 1 || (x instanceof Object) * 2 || 3 };
-					var cache = [];
 					var morph = function (subjectReference, model) {
-						var cached = cache.find(function (item) { return model == item; });
-						if (!cached) {
-							cache.push(model);
-							var subjectValue = subjectReference.context.get(subjectReference.path);
-							var subjectType = getType(subjectValue);
-							var modelType = getType(model);
-							switch (modelType) {
-								case (1): {
-									if (model != subjectValue) {
-										if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = []);
-										if (model.length > subjectValue.length) {
-											var extraElements = model.slice(subjectValue.length, model.length);
-											Polymer.Base.splice.apply(subjectReference.context, [subjectReference.path, subjectValue.length - 1, 0].concat(extraElements));
-										} else {
-											subjectReference.context.splice(subjectReference.path, model.length, subjectValue.length - model.length);
+						var nodes = [{ subjectReference: subjectReference, model: model }];
+						var cache = [];
+						while (nodes.length) {
+							var node = nodes.splice(0, 1)[0];
+							var subjectReference = node.subjectReference;
+							var model = node.model;
+							var cached = null;
+							if (!(cached = cache.find(function (item) { return item.model == model; }))) {
+								var subjectValue = subjectReference.context.get(subjectReference.path);
+								var subjectType = getType(subjectValue);
+								var modelType = getType(model);
+								switch (modelType) {
+									case (1): {
+										if (model != subjectValue) {
+											if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = []);
+											if (model.length > subjectValue.length) {
+												var extraElements = model.slice(subjectValue.length, model.length);
+												Polymer.Base.splice.apply(subjectReference.context, [subjectReference.path, subjectValue.length - 1, 0].concat(extraElements));
+											} else {
+												subjectReference.context.splice(subjectReference.path, model.length, subjectValue.length - model.length);
+											}
+											subjectValue.forEach(function (item, index) {
+												nodes.push({
+													subjectReference: {
+														context: subjectReference.context,
+														path: subjectReference.path + '.' + index
+													}, model: model[index]
+												});
+											});
 										}
-										subjectValue.forEach(function (item, index) {
-											morph({ context: subjectReference.context, path: subjectReference.path + '.' + index }, model[index]);
-										});
+										cache.push({ model: model, path: subjectReference.path, subjectValue: subjectValue });
+										break;
 									}
-									break;
-								}
-								case (2): {
-									if (model != subjectValue) {
-										if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = {});
-										var modelKeys = Object.keys(model);
-										var subjectKeys = Object.keys(subjectValue);
-										var keysToAdd = modelKeys.filter(function (modelKey) {
-											return !subjectKeys.some(function (subjectKey) {
-												return subjectKey == modelKey;
+									case (2): {
+										if (model != subjectValue) {
+											if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = {});
+											var modelKeys = Object.keys(model);
+											var subjectKeys = Object.keys(subjectValue);
+											var keysToAdd = modelKeys.filter(function (modelKey) {
+												return !subjectKeys.some(function (subjectKey) {
+													return subjectKey == modelKey;
+												});
 											});
-										});
-										var keysToRemove = subjectKeys.filter(function (subjectKey) {
-											return !modelKeys.some(function (modelKey) {
-												return subjectKey == modelKey;
+											var keysToRemove = subjectKeys.filter(function (subjectKey) {
+												return !modelKeys.some(function (modelKey) {
+													return subjectKey == modelKey;
+												});
 											});
-										});
-										var keysToUpdate = subjectKeys.filter(function (subjectKey) {
-											return !keysToRemove.some(function (keyToRemove) {
-												return subjectKey == keyToRemove;
+											var keysToUpdate = subjectKeys.filter(function (subjectKey) {
+												return !keysToRemove.some(function (keyToRemove) {
+													return subjectKey == keyToRemove;
+												});
 											});
-										});
-										keysToAdd.forEach(function (keyToAdd) {
-											subjectReference.context.set(subjectReference.path + '.' + keyToAdd, model[keyToAdd]);
-										});
-										keysToRemove.forEach(function (keyToRemove) {
-											subjectReference.context.set(subjectReference.path + '.' + keyToRemove, undefined);
-										});
-										keysToUpdate.forEach(function (keyToUpdate) {
-											morph({ context: subjectReference.context, path: subjectReference.path + '.' + keyToUpdate }, model[keyToUpdate]);
-										});
+											keysToAdd.forEach(function (keyToAdd) {
+												nodes.push({
+													subjectReference: {
+														context: subjectReference.context,
+														path: subjectReference.path + '.' + keyToAdd
+													}, model: model[keyToAdd]
+												});
+											});
+											keysToRemove.forEach(function (keyToRemove) {
+												subjectReference.context.set(subjectReference.path + '.' + keyToRemove, undefined);
+											});
+											keysToUpdate.forEach(function (keyToUpdate) {
+												nodes.push({
+													subjectReference: {
+														context: subjectReference.context,
+														path: subjectReference.path + '.' + keyToUpdate
+													}, model: model[keyToUpdate]
+												});
+											});
+										}
+										cache.push({ model: model, path: subjectReference.path, subjectValue: subjectValue });
+										break;
 									}
-									break;
+									case (3): {
+										if (subjectValue != model) subjectReference.context.set(subjectReference.path, subjectValue = model);
+									}
 								}
-								case (3): {
-									if (subjectValue != model) subjectReference.context.set(subjectReference.path, model);
+							} else {
+								if (cached.model instanceof Object) {
+									var parts = subjectReference.path.split('.');
+									var index = parts.pop();
+									var context = parts.reduce(function (context, part) {
+										return context[part];
+									}, subjectReference.context);
+									context[index] = cached.subjectValue;
 								}
 							}
 						}
