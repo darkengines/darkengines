@@ -31,7 +31,7 @@
 						keys.forEach(function (key, index) {
 							var template = document.createElement('template');
 							var property = that.schema.properties[key];
-							if (property.type) {
+							if (property && property.type) {
 								var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
 								Polymer.dom(template.content).appendChild(element);
 								that.templatize(template);
