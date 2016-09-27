@@ -18,9 +18,21 @@
 		(function () {
 			'use strict';
 			var onElementFactoryChanged = function () {
-				onSchemaChanged.call(this);
+				onSchemaChanged.call(this, 'schema', this.schema);
 			};
-			var onSchemaChanged = function () {
+			var onSchemaChanged = function (path, value) {
+				var parts = path.split('.');
+				var part = parts.splice(0, 1)[0];
+				if (part == 'schema') {
+					part = parts.splice(0, 1)[0];
+					if (part && part == 'properties') {
+						part = parts.splice(0, 1)[0];
+						if (part) {
+							var property = this.get('schema.propeties.' + part);
+
+						}
+					}
+				}
 				var objectElement = this.$.object;
 				this._map = {};
 				if (this.elementFactory && this.schema) {
@@ -71,7 +83,8 @@
 					return result;
 				},
 				observers: [
-					'_valueChanged(value.*)'
+					'_valueChanged(value.*)',
+					'_schemaChanged(schema.*)'
 				],
 				behaviors: [
 					Polymer.Templatizer
@@ -114,7 +127,6 @@
 						value: null,
 						notify: false,
 						readOnly: false,
-						observer: '_schemaChanged'
 					}, value: {
 						type: Object,
 						notify: true,
@@ -126,8 +138,8 @@
 				_elementFactoryChanged: function (newElementFactory, oldElementFactory) {
 					if (newElementFactory != oldElementFactory) onElementFactoryChanged.call(this)
 				},
-				_schemaChanged: function (newSchema, oldSchema) {
-					if (newSchema != oldSchema) onSchemaChanged.call(this);
+				_schemaChanged: function (changeRecord) {
+					onSchemaChanged.call(this, changeRecord.path, changeRecord.value);
 				},
 				_valueChanged: function (changeRecord) {
 					onValueChanged.call(this, changeRecord.path, changeRecord.value);
