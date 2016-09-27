@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <!--
 @license
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
@@ -219,10 +219,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 									<div style="display:inline-block; width:49%; vertical-align: top">
 										<darkengines-json-editor label="Schema" value='{
 	"type":"object",
+	"test": {
+		"type": "object",
+		"title": "Test title",
+		"properties":{
+			"test": {
+				"type":"string",
+				"title":"testString"
+			}
+		}
+	},
 	"properties":{
+		"test": {"$ref":"#/test"},
 		"firstname":{
 			"title":"Firstname",
-			"type":"string"
+			"type": "string"
 		},
 		"lastname":{
 			"title":"Lastname",
@@ -244,6 +255,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 					"title": "Truc",
 					"type":"object",
 					"properties":{
+						"test": {"$ref":"#/test"},
 						"bidule":{
 							"title":"Bidule",
 							"type":"string"

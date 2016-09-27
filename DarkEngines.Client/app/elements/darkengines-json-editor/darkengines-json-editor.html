@@ -63,7 +63,8 @@
 			}
 
 			var encode = function (root) {
-				var nodes = [{ parent: null, index: null, parentNode: null }];
+				var rootClone = root instanceof Object ? (root instanceof Array ? [] : {}) : root;
+				var nodes = [{ parent: null, index: null, parentNode: null, parentClone: rootClone }];
 				var buildPath = function (node) {
 					if (node.parentNode) {
 						return buildPath(node.parentNode) + '/' + node.index;
@@ -79,23 +80,31 @@
 							return (reference.parent ? reference.parent[reference.index] : root) == value;
 						});
 						if (reference) {
-							node.parent[node.index] = { '$ref': buildPath(reference) };
+							node.parentClone[node.index] = { '$ref': buildPath(reference) };
 						} else {
+							var clone = value instanceof Object ? (value instanceof Array ? [] : {}) : value;
+							if (node.index) {
+								node.parentClone[node.index] = clone;
+							} else {
+								clone = rootClone;
+							}
 							references.push(node);
 							if (value instanceof Array) {
 								value.forEach(function (item, index) {
-									nodes.push({ parent: value, index: index, parentNode: node });
+									nodes.push({ parent: value, index: index, parentNode: node, parentClone: clone });
 								});
 							} else {
 								var keys = Object.keys(value);
 								keys.forEach(function (key) {
-									nodes.push({ parent: value, index: key, parentNode: node });
+									nodes.push({ parent: value, index: key, parentNode: node, parentClone: clone });
 								});
 							}
 						}
+					} else {
+						node.parentClone[node.index] = value;
 					}
 				}
-				return root;
+				return rootClone;
 			};
 			Polymer({
 				is: 'darkengines-json-editor',
@@ -227,6 +236,7 @@
 										return context[part];
 									}, subjectReference.context);
 									context[index] = cached.subjectValue;
+									//subjectReference.context.linkPaths(subjectReference.path, cached.path);
 								}
 							}
 						}

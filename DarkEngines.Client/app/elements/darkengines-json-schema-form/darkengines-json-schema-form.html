@@ -13,16 +13,18 @@
 					while (root.firstChild) {
 						root.removeChild(root.firstChild);
 					}
-					var template = document.createElement('template');
-					var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
-					Polymer.dom(template.content).appendChild(element);
-					this.templatize(template);
-					this.templateInstance = this.stamp({});
-					this.templateInstance.elementFactory = this.elementFactory;
-					this.templateInstance.schema = this.schema;
-					this.templateInstance.value = this.value;
-					Polymer.dom(this.root).appendChild(this.templateInstance.root);
-					onValueChanged.call(this, 'value', this.value);
+					if (this.schema.type) {
+						var template = document.createElement('template');
+						var element = this.elementFactory[this.schema.type]('elementFactory', 'schema', 'value');
+						Polymer.dom(template.content).appendChild(element);
+						this.templatize(template);
+						this.templateInstance = this.stamp({});
+						this.templateInstance.elementFactory = this.elementFactory;
+						this.templateInstance.schema = this.schema;
+						this.templateInstance.value = this.value;
+						Polymer.dom(this.root).appendChild(this.templateInstance.root);
+						onValueChanged.call(this, 'value', this.value);
+					}
 				}
 			};
 			var onValueChanged = function (path, value) {
