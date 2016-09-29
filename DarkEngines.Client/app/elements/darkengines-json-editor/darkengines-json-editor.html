@@ -63,49 +63,84 @@
 			}
 
 			var encode = function (root) {
-				var rootClone = root instanceof Object ? (root instanceof Array ? [] : {}) : root;
-				var nodes = [{ parent: null, index: null, parentNode: null, parentClone: rootClone }];
-				var buildPath = function (node) {
-					if (node.parentNode) {
-						return buildPath(node.parentNode) + '/' + node.index;
-					}
-					return '#';
-				};
-				var references = [];
-				while (nodes.length) {
-					var node = nodes.splice(0, 1)[0];
-					var value = node.parent ? node.parent[node.index] : root;
-					if (value instanceof Object) {
-						var reference = references.find(function (reference) {
-							return (reference.parent ? reference.parent[reference.index] : root) == value;
-						});
-						if (reference) {
-							node.parentClone[node.index] = { '$ref': buildPath(reference) };
-						} else {
-							var clone = value instanceof Object ? (value instanceof Array ? [] : {}) : value;
-							if (node.index) {
-								node.parentClone[node.index] = clone;
-							} else {
-								clone = rootClone;
-							}
-							references.push(node);
-							if (value instanceof Array) {
-								value.forEach(function (item, index) {
-									nodes.push({ parent: value, index: index, parentNode: node, parentClone: clone });
-								});
-							} else {
-								var keys = Object.keys(value);
-								keys.forEach(function (key) {
-									nodes.push({ parent: value, index: key, parentNode: node, parentClone: clone });
-								});
-							}
-						}
-					} else {
-						node.parentClone[node.index] = value;
-					}
-				}
-				return rootClone;
+			    var rootContext = { "#": root };
+			    var cloneRootContext = {};
+			    var rootNode = { context: rootContext, index: '#', cloneContext: cloneRootContext, parentNode: null };
+			    var nodes = [rootNode];
+			    var cache = [];
+			    while (nodes.length) {
+			        var node = nodes.splice(0, 1)[0];
+			        var value = node.context[node.index];
+			        var valueIsObject = value instanceof Object;
+			        var cached = valueIsObject && cache.find(function (cached) {
+			            return cached.value == value;
+			        });
+			        if (cached) {
+			            var cachedNode = cached.node;
+			            var parts = [];
+			            while (cachedNode) {
+			                parts.splice(0, 0, cachedNode.index)
+			                cachedNode = cachedNode.parentNode;
+			            }
+			            node.cloneContext[node.index] = parts.join('/');
+			        } else {
+			            var valueClone = valueIsObject ? value.constructor() : value
+			            node.cloneContext[node.index] = valueClone;
+			            if (valueIsObject) {
+			                cache.push({ node: node, value: value, valueClone: valueClone });
+			                for (var index in value) {
+			                    nodes.push({ context: value, cloneContext: valueClone, index: index, parentNode: node });
+			                }
+			            }
+			        }
+			    }
+			    return cloneRootContext['#'];
 			};
+
+			//var encode = function (root) {
+			//	var rootClone = root instanceof Object ? (root instanceof Array ? [] : {}) : root;
+			//	var nodes = [{ parent: null, index: null, parentNode: null, parentClone: rootClone }];
+			//	var buildPath = function (node) {
+			//		if (node.parentNode) {
+			//			return buildPath(node.parentNode) + '/' + node.index;
+			//		}
+			//		return '#';
+			//	};
+			//	var references = [];
+			//	while (nodes.length) {
+			//		var node = nodes.splice(0, 1)[0];
+			//		var value = node.parent ? node.parent[node.index] : root;
+			//		if (value instanceof Object) {
+			//			var reference = references.find(function (reference) {
+			//				return (reference.parent ? reference.parent[reference.index] : root) == value;
+			//			});
+			//			if (reference) {
+			//				node.parentClone[node.index] = { '$ref': buildPath(reference) };
+			//			} else {
+			//				var clone = value instanceof Object ? (value instanceof Array ? [] : {}) : value;
+			//				if (node.index) {
+			//					node.parentClone[node.index] = clone;
+			//				} else {
+			//					clone = rootClone;
+			//				}
+			//				references.push(node);
+			//				if (value instanceof Array) {
+			//					value.forEach(function (item, index) {
+			//						nodes.push({ parent: value, index: index, parentNode: node, parentClone: clone });
+			//					});
+			//				} else {
+			//					var keys = Object.keys(value);
+			//					keys.forEach(function (key) {
+			//						nodes.push({ parent: value, index: key, parentNode: node, parentClone: clone });
+			//					});
+			//				}
+			//			}
+			//		} else {
+			//			node.parentClone[node.index] = value;
+			//		}
+			//	}
+			//	return rootClone;
+			//};
 			Polymer({
 				is: 'darkengines-json-editor',
 				properties: {
@@ -242,9 +277,11 @@
 						}
 					};
 
-					var parsed = JSON.parse(changeRecord.value);
-					resolve(parsed);
-					morph({ context: this, path: 'json' }, parsed);
+					if (changeRecord.value != undefined) {
+					    var parsed = JSON.parse(changeRecord.value);
+					    resolve(parsed);
+					    morph({ context: this, path: 'json' }, parsed);
+					}
 				},
 				_jsonChanged: function (changeRecord) {
 					var value = encode(this.json);

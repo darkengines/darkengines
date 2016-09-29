@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <!--
 @license
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
@@ -194,18 +194,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 							<paper-material elevation="1">
 								<h1 class="page-title" tabindex="-1">Json</h1>
 								<darkengines-json-editor label="z" value='{
-									"m": {
-										"a": {"$ref": "#/b"},
-										"b": {"$ref": "#/x/a"}
-									},
-									"y": {"$ref": "#/x/b/t"},
-									"x": {"$ref": "#"},
-									"a": {"$ref": "#/b/t"},
-									"b": {"$ref": "#/z"},
-									"z": {
-										"t": [1,3,3,7],
-										"a": {"$ref": "#"}
-									}
+								    "t": [1,2,3,4],
+                                    "special" : [
+                                        {"$ref":"#/t"}
+                                     ],
+                                    "tbis": {"$ref":"#/t"},
+                                    "this": {"$ref":"#"}
 								}' json="{{z}}"></darkengines-json-editor>	
 								<darkengines-json-editor label="z" json="{{z}}"></darkengines-json-editor>
 							</paper-material>
@@ -217,72 +211,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 								<darkengines-json-editor label="Object" json="{{x}}"></darkengines-json-editor>
 								<div>
 									<div style="display:inline-block; width:49%; vertical-align: top">
-										<darkengines-json-editor label="Schema" value='{
-	"type":"object",
-	"test": {
-		"type": "object",
-		"title": "Test title",
-		"properties":{
-			"test": {
-				"type":"string",
-				"title":"testString"
-			}
-		}
-	},
-	"properties":{
-		"test": {"$ref":"#/test"},
-		"firstname":{
-			"title":"Firstname",
-			"type": "string"
-		},
-		"lastname":{
-			"title":"Lastname",
-			"type":"string"
-		},
-		"address":{
-			"title": "Address",
-			"type":"object",
-			"properties":{
-				"city":{
-					"title":"City",
-					"type":"string"
-				},
-				"country":{
-					"title":"Country",
-					"type":"string"
-				},
-				"truc":{
-					"title": "Truc",
-					"type":"object",
-					"properties":{
-						"test": {"$ref":"#/test"},
-						"bidule":{
-							"title":"Bidule",
-							"type":"string"
-						},
-						"chouette":{
-							"title":"Chouette",
-							"type":"string"
-						}
-					}
-				}
-			}
-		},
-		"car": {
-			"title": "Car",
-			"type": "object",
-			"properties": {
-				"color": {
-					"title": "Color",
-					"type": "string"
-				}
-			}
-		}
-	},
-	"default":{
-
-	}
-}' json="{{y}}"></darkengines-json-editor>
+										<darkengines-json-editor label="Schema" value='{}' json="{{y}}"></darkengines-json-editor>
 									</div>
 									<div style="display:inline-block; width:49%; vertical-align: top">
 										<darkengines-json-schema-form schema="{{y}}" value="{{x}}"></darkengines-json-schema-form>
