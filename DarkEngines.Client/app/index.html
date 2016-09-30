@@ -194,18 +194,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 							<paper-material elevation="1">
 								<h1 class="page-title" tabindex="-1">Json</h1>
 								<darkengines-json-editor label="z" value='{
-									"m": {
-										"a": {"$ref": "#/b"},
-										"b": {"$ref": "#/x/a"}
+									"b":{
+										"y": {"$ref":"#/a"}
 									},
-									"y": {"$ref": "#/x/b/t"},
-									"x": {"$ref": "#"},
-									"a": {"$ref": "#/b/t"},
-									"b": {"$ref": "#/z"},
-									"z": {
-										"t": [1,3,3,7],
-										"a": {"$ref": "#"}
-									}
+									"a":{"x":1}
 								}' json="{{z}}"></darkengines-json-editor>	
 								<darkengines-json-editor label="z" json="{{z}}"></darkengines-json-editor>
 							</paper-material>

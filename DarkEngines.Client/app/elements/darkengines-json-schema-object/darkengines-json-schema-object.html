@@ -10,7 +10,7 @@
 				<h4 style="display: inline-block">{{ schema.title }}</h4>
 				<paper-icon-button icon="delete" id="delete"></paper-icon-button>
 			</div>
-			
+
 			<div id="object"></div>
 		</div>
 	</template>
@@ -24,40 +24,55 @@
 				var parts = path.split('.');
 				var part = parts.splice(0, 1)[0];
 				if (part == 'schema') {
-					part = parts.splice(0, 1)[0];
-					if (part && part == 'properties') {
-						part = parts.splice(0, 1)[0];
-						if (part) {
-							var property = this.get('schema.propeties.' + part);
+					var schemaLevelPart = parts.splice(0, 1)[0];
+					if (schemaLevelPart) {
+						switch (schemaLevelPart) {
+							case ('properties'): {
+								var propertiesLevelPart = parts.splice(0, 1)[0];
+								if (propertiesLevelPart) {
+									var propertyLevelPart = parts.splice(0, 1)[0];
+									if (propertyLevelPart) {
+										//Forward to property
+										parts.splice(0, 0, 'schema', propertyLevelPart);
+										var forwardPath = parts.join('.');
+										this._map[propertiesLevelPart].set(forwardPath, value);
+									} else {
+										//One property change
+									}
+								} else {
+									//All properties
+								}
+							}
+						}
+					} else {
+						//Process all tasks
+						var objectElement = this.$.object;
+						this._map = {};
+						if (this.elementFactory && this.schema) {
+							if (this.schema.properties) {
+								var keys = Object.keys(this.schema.properties);
+								var that = this;
 
+								keys.forEach(function (key, index) {
+									var template = document.createElement('template');
+									var property = that.schema.properties[key];
+									if (property && property.type) {
+										var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
+										Polymer.dom(template.content).appendChild(element);
+										that.templatize(template);
+										var templateInstance = that.stamp();
+										templateInstance.elementFactory = that.elementFactory;
+										templateInstance.schema = that.schema.properties[key];
+										templateInstance.value = that.value && that.value[key];
+										templateInstance.path = key;
+										that._map[key] = templateInstance;
+										Polymer.dom(objectElement).appendChild(templateInstance.root);
+									}
+								});
+							}
+							onValueChanged.call(this, 'value', this.value);
 						}
 					}
-				}
-				var objectElement = this.$.object;
-				this._map = {};
-				if (this.elementFactory && this.schema) {
-					if (this.schema.properties) {
-						var keys = Object.keys(this.schema.properties);
-						var that = this;
-						
-						keys.forEach(function (key, index) {
-							var template = document.createElement('template');
-							var property = that.schema.properties[key];
-							if (property && property.type) {
-								var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
-								Polymer.dom(template.content).appendChild(element);
-								that.templatize(template);
-								var templateInstance = that.stamp();
-								templateInstance.elementFactory = that.elementFactory;
-								templateInstance.schema = that.schema.properties[key];
-								templateInstance.value = that.value && that.value[key];
-								templateInstance.path = key;
-								that._map[key] = templateInstance;
-								Polymer.dom(objectElement).appendChild(templateInstance.root);
-							}
-						});
-					}
-					onValueChanged.call(this, 'value', this.value);
 				}
 			};
 			var onValueChanged = function (path, value) {
