@@ -29,7 +29,7 @@
 						var parts = path.split('/');
 						while (parts.length) {
 							var part = parts.splice(0, 1)[0];
-							if (part != '#') {
+							if (part !== '#') {
 								root = resolveReference(root[part], root);
 							}
 						}
@@ -43,9 +43,13 @@
 					if (value instanceof Object) {
 						if (node.parent) {
 							var resolved = resolveReference(value, root);
-							node.parent[node.index] = resolved;
+							if (node.parent instanceof Array) {
+								node.parent.slice(node.index, 0, resolved);
+							} else {
+								node.parent[node.index] = resolved;
+							}
 						}
-						if (!node.parent || value == node.parent[node.index]) {
+						if (!node.parent || value === node.parent[node.index]) {
 							if (value instanceof Array) {
 								value.forEach(function (item, index) {
 									nodes.push({ parent: value, index: index });
@@ -63,49 +67,88 @@
 			}
 
 			var encode = function (root) {
-				var rootClone = root instanceof Object ? (root instanceof Array ? [] : {}) : root;
-				var nodes = [{ parent: null, index: null, parentNode: null, parentClone: rootClone }];
-				var buildPath = function (node) {
-					if (node.parentNode) {
-						return buildPath(node.parentNode) + '/' + node.index;
-					}
-					return '#';
-				};
-				var references = [];
+				var rootContext = { "#": root };
+				var cloneRootContext = {};
+				var rootNode = { context: rootContext, index: '#', cloneContext: cloneRootContext, parentNode: null };
+				var nodes = [rootNode];
+				var cache = [];
 				while (nodes.length) {
 					var node = nodes.splice(0, 1)[0];
-					var value = node.parent ? node.parent[node.index] : root;
-					if (value instanceof Object) {
-						var reference = references.find(function (reference) {
-							return (reference.parent ? reference.parent[reference.index] : root) == value;
-						});
-						if (reference) {
-							node.parentClone[node.index] = { '$ref': buildPath(reference) };
+					var value = node.context[node.index];
+					var valueIsObject = value instanceof Object;
+					var cached = valueIsObject && cache.find(function (cached) {
+						return cached.value === value;
+					});
+					if (cached) {
+						var cachedNode = cached.node;
+						var parts = [];
+						while (cachedNode) {
+							parts.splice(0, 0, cachedNode.index)
+							cachedNode = cachedNode.parentNode;
+						}
+						node.cloneContext[node.index] = { $ref: parts.join('/') };
+					} else {
+						var valueClone = valueIsObject ? value.constructor() : value
+						if (node.cloneContext instanceof Array) {
+							node.cloneContext.splice(node.index, 0, valueClone);
 						} else {
-							var clone = value instanceof Object ? (value instanceof Array ? [] : {}) : value;
-							if (node.index) {
-								node.parentClone[node.index] = clone;
-							} else {
-								clone = rootClone;
-							}
-							references.push(node);
-							if (value instanceof Array) {
-								value.forEach(function (item, index) {
-									nodes.push({ parent: value, index: index, parentNode: node, parentClone: clone });
-								});
-							} else {
-								var keys = Object.keys(value);
-								keys.forEach(function (key) {
-									nodes.push({ parent: value, index: key, parentNode: node, parentClone: clone });
-								});
+							node.cloneContext[node.index] = valueClone;
+						}
+						if (valueIsObject) {
+							cache.push({ node: node, value: value, valueClone: valueClone });
+							for (var index in value) {
+								nodes.push({ context: value, cloneContext: valueClone, index: index, parentNode: node });
 							}
 						}
-					} else {
-						node.parentClone[node.index] = value;
 					}
 				}
-				return rootClone;
+				return cloneRootContext['#'];
 			};
+
+			//var encode = function (root) {
+			//	var rootClone = root instanceof Object ? (root instanceof Array ? [] : {}) : root;
+			//	var nodes = [{ parent: null, index: null, parentNode: null, parentClone: rootClone }];
+			//	var buildPath = function (node) {
+			//		if (node.parentNode) {
+			//			return buildPath(node.parentNode) + '/' + node.index;
+			//		}
+			//		return '#';
+			//	};
+			//	var references = [];
+			//	while (nodes.length) {
+			//		var node = nodes.splice(0, 1)[0];
+			//		var value = node.parent ? node.parent[node.index] : root;
+			//		if (value instanceof Object) {
+			//			var reference = references.find(function (reference) {
+			//				return (reference.parent ? reference.parent[reference.index] : root) == value;
+			//			});
+			//			if (reference) {
+			//				node.parentClone[node.index] = { '$ref': buildPath(reference) };
+			//			} else {
+			//				var clone = value instanceof Object ? (value instanceof Array ? [] : {}) : value;
+			//				if (node.index) {
+			//					node.parentClone[node.index] = clone;
+			//				} else {
+			//					clone = rootClone;
+			//				}
+			//				references.push(node);
+			//				if (value instanceof Array) {
+			//					value.forEach(function (item, index) {
+			//						nodes.push({ parent: value, index: index, parentNode: node, parentClone: clone });
+			//					});
+			//				} else {
+			//					var keys = Object.keys(value);
+			//					keys.forEach(function (key) {
+			//						nodes.push({ parent: value, index: key, parentNode: node, parentClone: clone });
+			//					});
+			//				}
+			//			}
+			//		} else {
+			//			node.parentClone[node.index] = value;
+			//		}
+			//	}
+			//	return rootClone;
+			//};
 			Polymer({
 				is: 'darkengines-json-editor',
 				properties: {
@@ -155,18 +198,17 @@
 							var subjectReference = node.subjectReference;
 							var model = node.model;
 							var cached = null;
-							if (!(cached = cache.find(function (item) { return item.model == model; }))) {
+							if (!(cached = cache.find(function (item) { return item.model === model; }))) {
 								var subjectValue = subjectReference.context.get(subjectReference.path);
 								var subjectType = getType(subjectValue);
 								var modelType = getType(model);
 								switch (modelType) {
 									case (1): {
-										if (model != subjectValue) {
-											if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = []);
+											if (subjectType !== modelType) subjectReference.context.set(subjectReference.path, subjectValue = []);
 											if (model.length > subjectValue.length) {
 												var extraElements = model.slice(subjectValue.length, model.length);
 												Polymer.Base.splice.apply(subjectReference.context, [subjectReference.path, subjectValue.length - 1, 0].concat(extraElements));
-											} else {
+											} else if (model.length < subjectValue.length) {
 												subjectReference.context.splice(subjectReference.path, model.length, subjectValue.length - model.length);
 											}
 											subjectValue.forEach(function (item, index) {
@@ -177,28 +219,26 @@
 													}, model: model[index]
 												});
 											});
-										}
 										cache.push({ model: model, path: subjectReference.path, subjectValue: subjectValue });
 										break;
 									}
 									case (2): {
-										if (model != subjectValue) {
-											if (subjectType != modelType) subjectReference.context.set(subjectReference.path, subjectValue = {});
+											if (subjectType !== modelType) subjectReference.context.set(subjectReference.path, subjectValue = {});
 											var modelKeys = Object.keys(model);
 											var subjectKeys = Object.keys(subjectValue);
 											var keysToAdd = modelKeys.filter(function (modelKey) {
 												return !subjectKeys.some(function (subjectKey) {
-													return subjectKey == modelKey;
+													return subjectKey === modelKey;
 												});
 											});
 											var keysToRemove = subjectKeys.filter(function (subjectKey) {
 												return !modelKeys.some(function (modelKey) {
-													return subjectKey == modelKey;
+													return subjectKey === modelKey;
 												});
 											});
 											var keysToUpdate = subjectKeys.filter(function (subjectKey) {
 												return !keysToRemove.some(function (keyToRemove) {
-													return subjectKey == keyToRemove;
+													return subjectKey === keyToRemove;
 												});
 											});
 											keysToAdd.forEach(function (keyToAdd) {
@@ -220,12 +260,11 @@
 													}, model: model[keyToUpdate]
 												});
 											});
-										}
 										cache.push({ model: model, path: subjectReference.path, subjectValue: subjectValue });
 										break;
 									}
 									case (3): {
-										if (subjectValue != model) subjectReference.context.set(subjectReference.path, subjectValue = model);
+										if (subjectValue !== model) subjectReference.context.set(subjectReference.path, subjectValue = model);
 									}
 								}
 							} else {
@@ -242,9 +281,11 @@
 						}
 					};
 
-					var parsed = JSON.parse(changeRecord.value);
-					resolve(parsed);
-					morph({ context: this, path: 'json' }, parsed);
+					if (changeRecord.value !== undefined) {
+						var parsed = JSON.parse(changeRecord.value);
+						resolve(parsed);
+						morph({ context: this, path: 'json' }, parsed);
+					}
 				},
 				_jsonChanged: function (changeRecord) {
 					var value = encode(this.json);
