@@ -25,6 +25,7 @@
 				var part = parts.splice(0, 1)[0];
 				if (part == 'schema') {
 					var schemaLevelPart = parts.splice(0, 1)[0];
+					var objectElement = this.$.object;
 					if (schemaLevelPart) {
 						switch (schemaLevelPart) {
 							case ('properties'): {
@@ -35,9 +36,32 @@
 										//Forward to property
 										parts.splice(0, 0, 'schema', propertyLevelPart);
 										var forwardPath = parts.join('.');
-										this._map[propertiesLevelPart].set(forwardPath, value);
+										this._map[propertiesLevelPart].templateInstance.set(forwardPath, value);
 									} else {
-										//One property change
+										var propertyElement = this._map[propertiesLevelPart];
+										if (!value && propertyElement) {
+											propertyElement.container.remove();
+											delete this._map[propertiesLevelPart];
+										}
+										if (value && !propertyElement) {
+											var parent = this.get(path.substr(0, path.lastIndexOf('.')));
+											var keys = Object.keys(parent);
+											var index = keys.indexOf(propertiesLevelPart);
+											var next = this.$.object.children[index + 1] || null;
+
+											var container = document.createElement('div');
+											var element = this.elementFactory[value.type]('elementFactory', 'schema', 'value');
+											Polymer.dom(template.content).appendChild(element);
+											this.templatize(template);
+											var templateInstance = this.stamp();
+											templateInstance.elementFactory = this.elementFactory;
+											templateInstance.schema = this.schema.properties[propertiesLevelPart];
+											templateInstance.value = this.value && this.value[propertiesLevelPart];
+											templateInstance.path = propertiesLevelPart;
+											this._map[propertiesLevelPart] = { templateInstance: templateInstance, container: container };
+											container.appendChild(templateInstance.root);
+											Polymer.dom(objectElement).insertBefore(containern, next);
+										}
 									}
 								} else {
 									//All properties
@@ -46,7 +70,6 @@
 						}
 					} else {
 						//Process all tasks
-						var objectElement = this.$.object;
 						this._map = {};
 						if (this.elementFactory && this.schema) {
 							if (this.schema.properties) {
@@ -57,6 +80,7 @@
 									var template = document.createElement('template');
 									var property = that.schema.properties[key];
 									if (property && property.type) {
+										var container = document.createElement('div');
 										var element = that.elementFactory[property.type]('elementFactory', 'schema', 'value');
 										Polymer.dom(template.content).appendChild(element);
 										that.templatize(template);
@@ -65,8 +89,9 @@
 										templateInstance.schema = that.schema.properties[key];
 										templateInstance.value = that.value && that.value[key];
 										templateInstance.path = key;
-										that._map[key] = templateInstance;
-										Polymer.dom(objectElement).appendChild(templateInstance.root);
+										that._map[key] = { templateInstance: templateInstance, container: container };
+										container.appendChild(templateInstance.root);
+										Polymer.dom(objectElement).appendChild(container);
 									}
 								});
 							}
@@ -81,14 +106,14 @@
 						var keys = Object.keys(this.schema.properties);
 						var that = this;
 						keys.forEach(function (key) {
-							if (that._map[key]) that._map[key].value = that.value[key];
+							if (that._map[key]) that._map[key].templateInstance.value = that.value[key];
 						});
 					}
 				} else {
 					var parts = path.split('.');
 					var front = parts.splice(0, 2);
 					path = parts.join('.');
-					if (this._map && this._map[front[1]]) this._map[front[1]].set(path ? ('value.' + path) : 'value', value);
+					if (this._map && this._map[front[1]]) this._map[front[1]].templateInstance.set(path ? ('value.' + path) : 'value', value);
 				}
 			};
 			Polymer({

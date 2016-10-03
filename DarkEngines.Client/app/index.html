@@ -193,23 +193,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 						<section data-route="json" tabindex="-1">
 							<paper-material elevation="1">
 								<h1 class="page-title" tabindex="-1">Json</h1>
-								<darkengines-json-editor label="z" value='{
-    "definitions": {
-        "simpleTypes": {
-            "enum": "mamadou"
-        }
-    },
-    "properties": {
-        "type": {
-            "anyOf": [
-                { "$ref": "#/definitions/simpleTypes" },
-                {
-                    "items": { "$ref": "#/definitions/simpleTypes" }
-                }
-            ]
-        }
-	}
-}' json="{{z}}"></darkengines-json-editor>	
+								<darkengines-json-editor label="z" value='{}' json="{{z}}"></darkengines-json-editor>	
 								<darkengines-json-editor label="z" json="{{z}}"></darkengines-json-editor>
 							</paper-material>
 						</section>
@@ -220,7 +204,72 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 								<darkengines-json-editor label="Object" json="{{x}}"></darkengines-json-editor>
 								<div>
 									<div style="display:inline-block; width:49%; vertical-align: top">
-										<darkengines-json-editor label="Schema" value='{}' json="{{y}}"></darkengines-json-editor>
+										<darkengines-json-editor label="Schema" value='{
+	"type":"object",
+	"test": {
+		"type": "object",
+		"title": "Test title",
+		"properties":{
+			"test": {
+				"type":"string",
+				"title":"testString"
+			}
+		}
+	},
+	"properties":{
+		"test": {"$ref":"#/test"},
+		"firstname":{
+			"title":"Firstname",
+			"type": "string"
+		},
+		"lastname":{
+			"title":"Lastname",
+			"type":"string"
+		},
+		"address":{
+			"title": "Address",
+			"type":"object",
+			"properties":{
+				"city":{
+					"title":"City",
+					"type":"string"
+				},
+				"country":{
+					"title":"Country",
+					"type":"string"
+				},
+				"truc":{
+					"title": "Truc",
+					"type":"object",
+					"properties":{
+						"test": {"$ref":"#/test"},
+						"bidule":{
+							"title":"Bidule",
+							"type":"string"
+						},
+						"chouette":{
+							"title":"Chouette",
+							"type":"string"
+						}
+					}
+				}
+			}
+		},
+		"car": {
+			"title": "Car",
+			"type": "object",
+			"properties": {
+				"color": {
+					"title": "Color",
+					"type": "string"
+				}
+			}
+		}
+	},
+	"default":{
+
+	}
+}' json="{{y}}"></darkengines-json-editor>
 									</div>
 									<div style="display:inline-block; width:49%; vertical-align: top">
 										<darkengines-json-schema-form schema="{{y}}" value="{{x}}"></darkengines-json-schema-form>

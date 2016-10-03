@@ -104,51 +104,6 @@
 				}
 				return cloneRootContext['#'];
 			};
-
-			//var encode = function (root) {
-			//	var rootClone = root instanceof Object ? (root instanceof Array ? [] : {}) : root;
-			//	var nodes = [{ parent: null, index: null, parentNode: null, parentClone: rootClone }];
-			//	var buildPath = function (node) {
-			//		if (node.parentNode) {
-			//			return buildPath(node.parentNode) + '/' + node.index;
-			//		}
-			//		return '#';
-			//	};
-			//	var references = [];
-			//	while (nodes.length) {
-			//		var node = nodes.splice(0, 1)[0];
-			//		var value = node.parent ? node.parent[node.index] : root;
-			//		if (value instanceof Object) {
-			//			var reference = references.find(function (reference) {
-			//				return (reference.parent ? reference.parent[reference.index] : root) == value;
-			//			});
-			//			if (reference) {
-			//				node.parentClone[node.index] = { '$ref': buildPath(reference) };
-			//			} else {
-			//				var clone = value instanceof Object ? (value instanceof Array ? [] : {}) : value;
-			//				if (node.index) {
-			//					node.parentClone[node.index] = clone;
-			//				} else {
-			//					clone = rootClone;
-			//				}
-			//				references.push(node);
-			//				if (value instanceof Array) {
-			//					value.forEach(function (item, index) {
-			//						nodes.push({ parent: value, index: index, parentNode: node, parentClone: clone });
-			//					});
-			//				} else {
-			//					var keys = Object.keys(value);
-			//					keys.forEach(function (key) {
-			//						nodes.push({ parent: value, index: key, parentNode: node, parentClone: clone });
-			//					});
-			//				}
-			//			}
-			//		} else {
-			//			node.parentClone[node.index] = value;
-			//		}
-			//	}
-			//	return rootClone;
-			//};
 			Polymer({
 				is: 'darkengines-json-editor',
 				properties: {
@@ -275,7 +230,7 @@
 										return context[part];
 									}, subjectReference.context);
 									context[index] = cached.subjectValue;
-									//subjectReference.context.linkPaths(subjectReference.path, cached.path);
+									subjectReference.context.linkPaths(subjectReference.path, cached.path);
 								}
 							}
 						}
